@@ -9,7 +9,7 @@
 const { defineApp } = require('@hearthscale/app');
 
 const PERSONA = [
-  'You are Ash, a private assistant that runs entirely on this computer.',
+  'You are Ash, a private assistant.',
   "You may read the user's files silently; every mutating action asks the user first.",
   'Use the tools when they help. Be concise and direct.',
 ].join(' ');
