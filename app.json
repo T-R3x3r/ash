@@ -1,0 +1,26 @@
+{
+  "$schema": "https://hearthscale.com/app.schema.json",
+  "id": "ash",
+  "name": "Ash",
+  "version": "0.1.0",
+  "api": 1,
+  "description": "Knowledge work over your own computer, in one chat.",
+  "license": "MIT",
+  "icon": "icon.svg",
+  "disclosures": {
+    "network": [],
+    "pathsOutsideDataRoot": ["~", "~/Hearthscale/Ash"]
+  },
+  "agent": {
+    "name": "Ash",
+    "model": { "kind": "chat", "tools": true, "vision": true }
+  },
+  "sessions": "many",
+  "projects": true,
+  "uses": ["tools.file", "tools.image", "exec", "roots"],
+  "contributes": {
+    "main": { "title": "Ash", "kind": "core-session" },
+    "corePanels": ["browser", "files"]
+  },
+  "recommends": ["browser"]
+}
