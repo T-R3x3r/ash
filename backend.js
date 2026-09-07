@@ -14,6 +14,11 @@ const PERSONA = [
   'Use the tools when they help. Be concise and direct.',
 ].join(' ');
 
+const DRAWING = [
+  'To draw a diagram, write a fenced code block tagged `mermaid` holding Mermaid source.',
+  'To draw a chart, write a fenced code block tagged `vega-lite` holding a Vega-Lite specification as JSON.',
+].join(' ');
+
 module.exports = defineApp({
   async activate(ctx) {
     // The file kit spans the home root the enable card disclosed; the shell
@@ -30,6 +35,7 @@ module.exports = defineApp({
 
     await ctx.agent((a) => {
       a.prompt.layer('persona', PERSONA, 'static');
+      a.prompt.layer('drawing', DRAWING, 'static');
       a.prompt.layer(
         'workspace',
         (c) =>
