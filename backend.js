@@ -6,12 +6,19 @@
  * specialist. A capability it cannot reach through `ctx` is a defect in
  * the app contract.
  */
-const { defineApp } = require('@hearthscale/app');
+const { defineApp, p } = require('@hearthscale/app');
 
 const PERSONA = [
   'You are Ash, a private assistant.',
   "You may read the user's files silently; every mutating action asks the user first.",
   'Use the tools when they help. Be concise and direct.',
+].join(' ');
+
+const ARTIFACTS = [
+  'Write a file when the result is a standalone thing the person will keep or use elsewhere:',
+  'a report, a document, a chart, a diagram, a picture.',
+  'Answer in the chat when the result is a strategy, a summary, an outline or an explanation,',
+  'and whenever it is a list or a table, whatever its length.',
 ].join(' ');
 
 const DRAWING = [
@@ -33,9 +40,35 @@ module.exports = defineApp({
     const shellRef = workspace ? await ctx.tools.shell(workspace.id) : null;
     const imageRef = await ctx.tools.image();
 
+    // A subagent is a session of its own: it carries nothing of this
+    // conversation, and its own tool calls ask in its own transcript.
+    await ctx.tools.register({
+      name: 'delegate',
+      parameters: p.object(
+        {
+          task: p.string('Everything the subagent needs to do the work, in full'),
+          title: p.string('A few words naming the task, shown beside the subagent'),
+          app: p.string('Another installed app to do the work in, by its id'),
+        },
+        ['task', 'title'],
+      ),
+      execute: async (args, run) => {
+        const child = await ctx.sessions.spawn({
+          parent: run.sessionId,
+          title: String(args.title),
+          ...(args.app ? { app: String(args.app) } : {}),
+        });
+        await ctx.sessions.continue(child, String(args.task));
+        const reply = await ctx.sessions.wait(child);
+        if (reply.stop !== 'stop') return `The subagent stopped (${reply.stop}): ${reply.text}`;
+        return reply.text;
+      },
+    });
+
     await ctx.agent((a) => {
       a.prompt.layer('persona', PERSONA, 'static');
       a.prompt.layer('drawing', DRAWING, 'static');
+      a.prompt.layer('artifacts', ARTIFACTS, 'static');
       a.prompt.layer(
         'workspace',
         (c) =>
