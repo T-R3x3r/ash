@@ -53,7 +53,6 @@ module.exports = defineApp({
         'session',
       );
       a.tools.use(...fileRefs, ...(shellRef ? [shellRef] : []), imageRef);
-      a.tools.connectors();
     });
   },
 });
