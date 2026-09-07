@@ -2,7 +2,7 @@
   "$schema": "https://hearthscale.com/app.schema.json",
   "id": "ash",
   "name": "Ash",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "api": 1,
   "description": "Knowledge work over your own computer, in one chat.",
   "license": "MIT",
@@ -32,7 +32,7 @@
   ],
   "contributes": {
     "main": { "title": "Ash", "kind": "core-session" },
-    "corePanels": ["browser", "files"]
+    "corePanels": ["browser", "files", "diff", "terminal"]
   },
   "recommends": ["browser", "schedules", "artifacts"]
 }
