@@ -34,5 +34,17 @@
     "main": { "title": "Ash", "kind": "core-session" },
     "corePanels": ["browser", "files", "diff", "terminal"]
   },
+  "extends": {
+    "schedules": {
+      "suggestions": [
+        {
+          "title": "Morning brief",
+          "repeat": "weekdays",
+          "at": "09:00",
+          "prompt": "Look through ~/Hearthscale/Ash for what changed since yesterday, then write a short brief of what needs attention today."
+        }
+      ]
+    }
+  },
   "recommends": ["browser", "schedules", "artifacts"]
 }
