@@ -2,22 +2,41 @@
   "$schema": "https://hearthscale.com/app.schema.json",
   "id": "ash",
   "name": "Ash",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "api": 1,
   "description": "Knowledge work over your own computer, in one chat.",
+  "categories": [
+    "chat",
+    "productivity"
+  ],
+  "payment": "free",
   "license": "MIT",
   "icon": "icon.svg",
   "disclosures": {
     "network": [],
-    "pathsOutsideDataRoot": ["~", "~/Hearthscale/Ash"]
+    "pathsOutsideDataRoot": [
+      "~",
+      "~/Hearthscale/Ash"
+    ]
   },
   "agent": {
     "name": "Ash",
-    "model": { "kind": "chat", "tools": true, "vision": true }
+    "model": {
+      "kind": "chat",
+      "tools": true,
+      "vision": true
+    }
   },
   "sessions": "many",
   "projects": true,
-  "uses": ["tools.file", "tools.image", "exec", "roots", "sessions", "sessions.spawn"],
+  "uses": [
+    "tools.file",
+    "tools.image",
+    "exec",
+    "roots",
+    "sessions",
+    "sessions.spawn"
+  ],
   "tools": [
     {
       "name": "delegate",
@@ -31,8 +50,16 @@
     }
   ],
   "contributes": {
-    "main": { "title": "Ash", "kind": "core-session" },
-    "corePanels": ["browser", "files", "diff", "terminal"]
+    "main": {
+      "title": "Ash",
+      "kind": "core-session"
+    },
+    "corePanels": [
+      "browser",
+      "files",
+      "diff",
+      "terminal"
+    ]
   },
   "extends": {
     "schedules": {
@@ -46,5 +73,9 @@
       ]
     }
   },
-  "recommends": ["browser", "schedules", "artifacts"]
+  "recommends": [
+    "browser",
+    "schedules",
+    "artifacts"
+  ]
 }
