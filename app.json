@@ -1,81 +1,55 @@
 {
-  "$schema": "https://hearthscale.com/app.schema.json",
   "id": "ash",
   "name": "Ash",
-  "version": "0.3.2",
-  "api": 1,
-  "description": "Knowledge work over your own computer, in one chat.",
+  "version": "5.1.0",
+  "api": 2,
+  "description": "A general assistant that reads, writes and runs things on your computer.",
+  "icon": "icon.svg",
+  "license": "MIT",
   "categories": [
     "chat",
     "productivity"
   ],
   "payment": "free",
-  "license": "MIT",
-  "icon": "icon.svg",
-  "disclosures": {
-    "network": [],
-    "pathsOutsideDataRoot": [
-      "~",
-      "~/Hearthscale/Ash"
-    ]
-  },
   "agent": {
     "name": "Ash",
     "model": {
       "kind": "chat",
-      "tools": true,
-      "vision": true
-    }
+      "tools": true
+    },
+    "prompt": [
+      "prompt/system.md"
+    ],
+    "tools": [
+      "read",
+      "write",
+      "edit",
+      "find",
+      "grep",
+      "bash",
+      "generate",
+      "delegate",
+      "tool_search",
+      "tool_describe",
+      "tool_call"
+    ],
+    "roots": [
+      "home",
+      "workspace",
+      "memory"
+    ],
+    "skills": [
+      "skills"
+    ],
+    "projects": true
   },
-  "sessions": "many",
-  "projects": true,
-  "uses": [
-    "tools.file",
-    "tools.image",
-    "exec",
-    "roots",
-    "sessions",
-    "sessions.spawn"
-  ],
-  "tools": [
-    {
-      "name": "delegate",
-      "title": "Hand a task to a subagent",
-      "description": "Hand one self-contained task to a subagent and wait for its answer. The subagent works in its own session with its own tools, and it cannot see this conversation, so the task must carry everything it needs. Use it for work that is worth a whole conversation of its own, and for two or more pieces of work that do not depend on each other. `app` names another installed app to do the work in; leave it out and the task goes to another Ash session.",
-      "mutating": false,
-      "outbound": false,
-      "timeoutMs": 630000,
-      "minParams": 100000000000,
-      "icon": "brain"
-    }
-  ],
   "contributes": {
     "main": {
-      "title": "Ash",
-      "kind": "core-session"
-    },
-    "corePanels": [
-      "browser",
-      "files",
-      "diff",
-      "terminal"
-    ]
-  },
-  "extends": {
-    "schedules": {
-      "suggestions": [
-        {
-          "title": "Morning brief",
-          "repeat": "weekdays",
-          "at": "09:00",
-          "prompt": "Look through ~/Hearthscale/Ash for what changed since yesterday, then write a short brief of what needs attention today."
-        }
-      ]
+      "kind": "chat",
+      "title": "Ash"
     }
   },
   "recommends": [
-    "browser",
-    "schedules",
-    "artifacts"
+    "browser"
   ]
 }
