@@ -1,7 +1,7 @@
 {
   "id": "ash",
   "name": "Ash",
-  "version": "5.3.0",
+  "version": "5.4.0",
   "api": 3,
   "description": "A general assistant that reads, writes and runs things on your computer.",
   "icon": "icon.svg",
@@ -47,7 +47,13 @@
     "main": {
       "kind": "chat",
       "title": "Ash"
-    }
+    },
+    "corePanels": [
+      "browser",
+      "files",
+      "diff",
+      "terminal"
+    ]
   },
   "recommends": [
     "browser"
