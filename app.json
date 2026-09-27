@@ -1,7 +1,7 @@
 {
   "id": "ash",
   "name": "Ash",
-  "version": "5.5.0",
+  "version": "5.6.0",
   "api": 4,
   "description": "A general assistant that reads, writes and runs things on your computer.",
   "icon": "icon.svg",
@@ -27,6 +27,8 @@
       "find",
       "grep",
       "bash",
+      "exec",
+      "exec_wait",
       "generate",
       "delegate",
       "tool_search",
