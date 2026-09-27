@@ -1,8 +1,8 @@
 {
   "id": "ash",
   "name": "Ash",
-  "version": "5.4.0",
-  "api": 3,
+  "version": "5.5.0",
+  "api": 4,
   "description": "A general assistant that reads, writes and runs things on your computer.",
   "icon": "icon.svg",
   "license": "MIT",
