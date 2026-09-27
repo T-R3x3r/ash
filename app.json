@@ -1,7 +1,7 @@
 {
   "id": "ash",
   "name": "Ash",
-  "version": "5.8.2",
+  "version": "5.9.0",
   "api": 4,
   "description": "A general assistant that reads, writes and runs things on your computer.",
   "icon": "icon.svg",
@@ -31,7 +31,10 @@
       "exec",
       "exec_wait",
       "generate",
-      "delegate",
+      "spawn_agent",
+      "message_agent",
+      "wait_agents",
+      "stop_agent",
       "tool_search",
       "tool_call"
     ],
