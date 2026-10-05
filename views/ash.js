@@ -6,7 +6,8 @@
  * projects, the unread marks and the folded sidebar in Ash's store.
  *
  * Nothing the page draws shows over the slot, so the page's menus and tips
- * stay inside the sidebar, and the slot gives way while a sheet is open.
+ * stay inside the sidebar; its sheets open in a modal over the page
+ * (`views/sheet.js`), which the shell draws over the chat as well.
  * Folded on a wide page, the sidebar leaves a strip beside the chat. Below
  * the wide width it folds into a bar above the chat, and opens over the
  * whole page in place of the chat.
@@ -47,7 +48,7 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 
 // ---------- The bridge ----------
 
-const app = new App({ name: 'Ash', version: '6.0.0' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.1.0' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
@@ -226,9 +227,6 @@ const state = {
   renaming: null,
   renamingProject: null,
   creatingProject: false,
-  /** The sheet over the page: a delete to confirm, or a project's
-   *  instructions. */
-  dialog: null,
   drag: null,
   heights: { session: 0, subagent: 0, project: 0 },
   scrollY: 0,
@@ -294,7 +292,6 @@ function page() {
         },
         state.drag.label,
       ),
-    dialogView(),
   );
 }
 
@@ -861,6 +858,8 @@ function sessionMenu(id) {
 }
 
 function projectMenu(id) {
+  const project = state.projects.find((p) => p.id === id);
+  if (!project) return null;
   return [
     item({
       icon: glyph('edit-2-fill', 14),
@@ -877,15 +876,21 @@ function projectMenu(id) {
         openDialog({
           kind: 'instructions',
           id,
-          text: state.projects.find((p) => p.id === id)?.instructions ?? '',
+          name: project.name,
+          text: project.instructions,
         }),
+    }),
+    item({
+      icon: glyph('folder-line', 14),
+      label: 'Open folder',
+      onClick: () => void quietly('openai/files/open', { path: project.folder }),
     }),
     divider(),
     item({
       icon: glyph('delete-bin-fill', 14),
       label: 'Delete project',
       danger: true,
-      onClick: () => openDialog({ kind: 'delete-project', id }),
+      onClick: () => openDialog({ kind: 'delete-project', id, name: project.name }),
     }),
   ];
 }
@@ -969,142 +974,10 @@ function tipView() {
   );
 }
 
-/** The confirmation of a delete, as the shell's own confirmations look. */
-function confirmView({ title, body, action, onConfirm }) {
-  const cancel = () => closeDialog();
-  return h(
-    'div',
-    { key: 'dialog', class: 'hs-confirm', onclick: (e) => (e.stopPropagation(), cancel()) },
-    h(
-      'div',
-      { class: 'hs-confirm-box', role: 'dialog', onclick: stop },
-      h('span', { class: 'hs-confirm-title' }, title),
-      h('span', { class: 'hs-confirm-body' }, body),
-      h(
-        'div',
-        { class: 'hs-confirm-footer' },
-        h(
-          'button',
-          {
-            type: 'button',
-            class: 'hs-button hs-confirm-cancel',
-            'data-variant': 'secondary',
-            'data-size': 'sm',
-            onclick: cancel,
-          },
-          'Cancel',
-        ),
-        h(
-          'button',
-          {
-            type: 'button',
-            class: 'hs-button hs-confirm-action',
-            'data-variant': 'danger',
-            'data-size': 'sm',
-            onclick: onConfirm,
-          },
-          action,
-        ),
-      ),
-    ),
-  );
-}
-
-/** The sheet that edits a project's instructions. */
-function instructionsView(project, draft) {
-  const button = (label, onClick, strong) =>
-    h(
-      'span',
-      {
-        class: `hs-glassbtn hs-inktext hs-sheet-button${strong ? ' hs-hovink' : ''}`,
-        'data-strong': strong ? 'true' : 'false',
-        onclick: onClick,
-      },
-      label,
-    );
-  return h(
-    'div',
-    {
-      key: 'dialog',
-      class: 'hs-sheet-shell',
-      onclick: (e) => (e.stopPropagation(), closeDialog()),
-    },
-    h(
-      'div',
-      { class: 'hs-sheet-box', role: 'dialog', onclick: stop },
-      h('span', { class: 'hs-sheet-title' }, `Instructions for ${project.name}`),
-      h(
-        'span',
-        { class: 'hs-sheet-hint' },
-        'Every conversation in this project reads this before it starts.',
-      ),
-      h('textarea', {
-        class: 'hs-ta hs-sheet-input',
-        rows: 7,
-        placeholder: 'What the assistant should know or do in this project…',
-        mount: (el) => {
-          el.value = draft.text;
-          el.focus();
-        },
-        oninput: (e) => (draft.text = e.currentTarget.value),
-        onkeydown: (e) => {
-          if (e.key !== 'Escape') return;
-          e.preventDefault();
-          closeDialog();
-        },
-      }),
-      h(
-        'div',
-        { class: 'hs-sheet-footer' },
-        button('Cancel', () => closeDialog(), false),
-        button(
-          'Save',
-          () => {
-            closeDialog();
-            void quietly('hearthscale/sessions/projects/update', {
-              id: project.id,
-              instructions: draft.text,
-            });
-          },
-          true,
-        ),
-      ),
-    ),
-  );
-}
-
-function dialogView() {
-  const d = state.dialog;
-  if (!d) return null;
-  if (d.kind === 'delete') {
-    const one = d.ids.length === 1;
-    return confirmView({
-      title: one ? 'Delete this session?' : `Delete ${d.ids.length} sessions?`,
-      body: one
-        ? 'It is gone for good, with everything it did.'
-        : 'They are gone for good, with everything they did.',
-      action: one ? 'Delete session' : `Delete ${d.ids.length} sessions`,
-      onConfirm: () => deleteSessions(d.ids),
-    });
-  }
-  const project = state.projects.find((p) => p.id === d.id);
-  if (!project) return null;
-  if (d.kind === 'instructions') return instructionsView(project, d);
-  return confirmView({
-    title: `Delete ${project.name}?`,
-    body: "Its conversations stay and move to the list without a project. The project's folder stays on this computer.",
-    action: 'Delete project',
-    onConfirm: () => {
-      closeDialog();
-      void quietly('hearthscale/sessions/projects/delete', { id: d.id });
-    },
-  });
-}
-
 /** The box a popup stays in: the sidebar while the chat lies beside it,
  *  else the page. */
 function boundary() {
-  const column = layout() === 'side' && !state.dialog && root.querySelector('.hs-sidebar-column');
+  const column = layout() === 'side' && root.querySelector('.hs-sidebar-column');
   return {
     left: 0,
     top: 0,
@@ -1185,27 +1058,24 @@ function closeMenu(now = false) {
   render();
 }
 
+/** Opens a sheet in a modal over the page, on the press that asks for
+ *  it. */
 function openDialog(dialog) {
-  state.dialog = dialog;
   state.tip = null;
   render();
-}
-
-function closeDialog() {
-  state.dialog = null;
-  render();
+  void quietly('hearthscale/ui/open-modal', { surface: 'sheet', input: dialog });
 }
 
 // ---------- The chat slot ----------
 
 let reported = '';
 
-/** Tells the host where the chat lies and which conversation it shows; a
- *  sheet or the sidebar over the whole page gives the slot back. */
+/** Tells the host where the chat lies and which conversation it shows;
+ *  the sidebar over the whole page gives the slot back. */
 function reportSlots() {
   const chat = root.querySelector('.ash-chat');
   const slots = [];
-  if (chat && !state.dialog) {
+  if (chat) {
     const r = chat.getBoundingClientRect();
     slots.push({
       id: 'chat',
@@ -1341,23 +1211,6 @@ async function fork(id) {
   await refresh();
   selectOnly(made.session.id);
   show(made.session.id);
-}
-
-/** Deletes conversations, on the press that confirms it; the chat moves
- *  to the next one when it showed one of them. */
-async function deleteSessions(ids) {
-  const deleting = Promise.all(ids.map((id) => quietly('hearthscale/sessions/delete', { id })));
-  const shown = state.open !== null && ids.includes(state.open);
-  closeDialog();
-  await deleting;
-  await refresh();
-  if (shown) {
-    const next = [...state.sessions].sort(byRank)[0]?.id ?? null;
-    if (next) show(next);
-    else newSession(null);
-    selectOnly(next);
-  } else selectOnly(state.open);
-  render();
 }
 
 function archiveSelection() {
@@ -1665,7 +1518,12 @@ app.fallbackNotificationHandler = async (note) => {
       state.sessions = state.sessions.filter((s) => s.id !== params.id);
       state.helpers = state.helpers.filter((s) => s.id !== params.id);
       if (state.unread.delete(params.id)) keep('unread');
-      if (state.open === params.id) newSession(null);
+      if (state.open === params.id) {
+        const next = [...state.sessions].sort(byRank)[0]?.id ?? null;
+        if (next) show(next);
+        else newSession(null);
+        selectOnly(next);
+      } else if (state.selected.delete(params.id)) selectOnly(state.open);
       render();
       return;
     case 'hearthscale/sessions/projects/changed':
@@ -1688,16 +1546,12 @@ addEventListener('resize', () => {
   render();
 });
 
-// Escape closes the sheet, else the menu, else a selection of more than
-// one row.
+// Escape closes the menu, else a selection of more than one row.
 addEventListener(
   'keydown',
   (e) => {
     if (e.key !== 'Escape') return;
-    if (state.dialog) {
-      e.preventDefault();
-      closeDialog();
-    } else if (state.menu && !state.menu.closing) {
+    if (state.menu && !state.menu.closing) {
       e.stopPropagation();
       e.preventDefault();
       closeMenu();

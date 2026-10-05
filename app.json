@@ -1,8 +1,8 @@
 {
   "id": "ash",
   "name": "Ash",
-  "version": "6.0.0",
-  "api": 4,
+  "version": "6.1.0",
+  "api": 6,
   "description": "A general assistant that reads, writes and runs things on your computer.",
   "icon": "icon.svg",
   "license": "MIT",
@@ -52,24 +52,13 @@
     ],
     "projects": true
   },
-  "contributes": {
-    "main": {
-      "kind": "chat",
-      "title": "Ash"
-    },
-    "corePanels": [
-      "browser",
-      "files",
-      "diff",
-      "terminal"
-    ]
-  },
   "recommends": [
     "browser"
   ],
   "uses": [
     "sessions",
-    "store"
+    "store",
+    "files.open"
   ],
   "surfaces": [
     {
@@ -80,6 +69,15 @@
         "rail"
       ],
       "entry": "views/ash.js"
+    },
+    {
+      "id": "sheet",
+      "kind": "view",
+      "title": "Ash",
+      "placements": [
+        "modal"
+      ],
+      "entry": "views/sheet.js"
     }
   ]
 }
