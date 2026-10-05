@@ -2,7 +2,7 @@
   "id": "ash",
   "name": "Ash",
   "version": "6.0.0",
-  "api": 4,
+  "api": 6,
   "description": "A general assistant that reads, writes and runs things on your computer.",
   "icon": "icon.svg",
   "license": "MIT",
@@ -51,18 +51,6 @@
       "skills"
     ],
     "projects": true
-  },
-  "contributes": {
-    "main": {
-      "kind": "chat",
-      "title": "Ash"
-    },
-    "corePanels": [
-      "browser",
-      "files",
-      "diff",
-      "terminal"
-    ]
   },
   "recommends": [
     "browser"
