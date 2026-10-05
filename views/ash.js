@@ -7,8 +7,9 @@
  *
  * Nothing the page draws shows over the slot, so the page's menus and tips
  * stay inside the sidebar, and the slot gives way while a sheet is open.
- * Below the wide width the sidebar folds into a strip beside the chat and
- * opens over the whole page in place of the chat.
+ * Folded on a wide page, the sidebar leaves a strip beside the chat. Below
+ * the wide width it folds into a bar above the chat, and opens over the
+ * whole page in place of the chat.
  */
 import {
   App,
@@ -33,11 +34,13 @@ const PAD = 8;
 const SHEET = `
 html, body, .ash-root { height: 100%; overflow: hidden; }
 .ash { position: relative; height: 100%; }
-.ash-chat { flex: 1; min-width: 0; }
+.ash[data-shape='bar'] { flex-direction: column; }
+.ash-chat { flex: 1; min-width: 0; min-height: 0; }
 .hs-app-surface > .hs-sidebar-column.ash-drawer { flex: 1; width: auto; border-right: none; }
-.ash-head { flex: none; margin-right: 4px; cursor: default; }
+.ash-head { cursor: default; }
 .ash-strip { flex: none; width: 40px; padding-top: 6px; display: flex; flex-direction: column; align-items: center; }
-.ash-strip > .hs-sidebar-rowact { width: 28px; height: 29px; }
+.ash-bar { flex: none; height: 36px; padding: 0 6px; display: flex; align-items: center; }
+:is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: 28px; height: 29px; }
 .ash-glyph { display: block; flex: none; width: 1em; height: 1em; line-height: 1; }
 .hs-shell :is(.hs-hovbox, .hs-hovbox-ink):active .ash-glyph { transform: var(--press); opacity: var(--press-fade); }
 `;
@@ -135,7 +138,8 @@ function sync(parent, kids, svg) {
 const stop = (e) => e.stopPropagation();
 
 /** A Remix Icon of the kit, by its remixicon.com name. */
-const glyph = (name, size) => h('i', { class: `ri-${name} ash-glyph`, style: `font-size: ${size}px` });
+const glyph = (name, size) =>
+  h('i', { class: `ri-${name} ash-glyph`, style: `font-size: ${size}px` });
 
 /** A project folder, open or closed, drawn in outline when it holds no
  *  conversation. */
@@ -263,11 +267,11 @@ function draw() {
   reportSlots();
 }
 
-/** What the page shows: the sidebar beside the chat, the strip beside the
- *  chat, or the sidebar over the whole page. */
+/** What the page shows: the sidebar or the strip beside the chat, the bar
+ *  above it, or the sidebar over the whole page. */
 function layout() {
   if (state.wide) return state.shown ? 'side' : 'strip';
-  return state.drawer ? 'drawer' : 'strip';
+  return state.drawer ? 'drawer' : 'bar';
 }
 
 function page() {
@@ -275,8 +279,8 @@ function page() {
   const shape = layout();
   return h(
     'div',
-    { class: 'hs-app-surface ash', onclick: () => closeMenu() },
-    shape === 'strip' ? strip() : column(shape === 'drawer'),
+    { class: 'hs-app-surface ash', 'data-shape': shape, onclick: () => closeMenu() },
+    shape === 'strip' || shape === 'bar' ? folded(shape) : column(shape === 'drawer'),
     shape !== 'drawer' && h('main', { key: 'chat', class: 'ash-chat' }),
     menuView(),
     tipView(),
@@ -316,12 +320,17 @@ const tipOn = (key, text) => {
 
 /** A control of the sidebar's own: the rows' action, always shown. */
 const control = (props, child) =>
-  h('span', { ...props, class: `hs-hovink hs-inkmut hs-sidebar-rowact ${props.class ?? ''}` }, child);
+  h(
+    'span',
+    { ...props, class: `hs-hovink hs-inkmut hs-sidebar-rowact ${props.class ?? ''}` },
+    child,
+  );
 
-function strip() {
+/** The folded sidebar's two presses: show the sidebar, and a new chat. */
+function folded(shape) {
   return h(
     'div',
-    { key: 'strip', class: 'ash-strip' },
+    { key: shape, class: `ash-${shape}` },
     control(
       {
         onclick: (e) => {
@@ -441,7 +450,9 @@ function rowsOf() {
     if (open) for (const session of members) push(session, project.id);
   }
   const filed = new Set(state.projects.map((p) => p.id));
-  for (const session of state.sessions.filter((s) => !(s.project && filed.has(s.project))).sort(byRank)) {
+  for (const session of state.sessions
+    .filter((s) => !(s.project && filed.has(s.project)))
+    .sort(byRank)) {
     push(session, null);
   }
   return rows;
@@ -464,7 +475,8 @@ function windowOf(rows) {
   const total = tops[tops.length - 1];
   const scroller = root.querySelector('.hs-sidebar-scroll');
   const block = root.querySelector('.hs-session-block');
-  if (!scroller || !block || rows.length <= WINDOWED) return { start: 0, end: rows.length, tops, total };
+  if (!scroller || !block || rows.length <= WINDOWED)
+    return { start: 0, end: rows.length, tops, total };
   const offset =
     block.getBoundingClientRect().top - scroller.getBoundingClientRect().top + state.scrollY;
   const from = state.scrollY - offset;
@@ -483,7 +495,8 @@ function windowOf(rows) {
 
 function statusOf(session) {
   const asks = (s) => s.status === 'requires_action';
-  if (asks(session) || state.helpers.some((x) => x.spawnedBy === session.id && asks(x))) return 'waiting';
+  if (asks(session) || state.helpers.some((x) => x.spawnedBy === session.id && asks(x)))
+    return 'waiting';
   if (session.status === 'running') return 'working';
   if (state.unread.has(session.id)) return 'unread';
   return 'rest';
@@ -508,7 +521,8 @@ function sessionRow(s, list, order) {
         'data-filed': list ? 'true' : undefined,
         'data-dragged': state.drag?.ids.includes(s.id) ? 'true' : undefined,
         onmousedown: (e) => pressRow(e, s.id),
-        onclick: (e) => clickSession(s.id, { shift: e.shiftKey, ctrl: e.ctrlKey || e.metaKey }, order),
+        onclick: (e) =>
+          clickSession(s.id, { shift: e.shiftKey, ctrl: e.ctrlKey || e.metaKey }, order),
       },
       h('span', { class: 'hs-session-mark' }, statusMark(statusOf(s))),
       renaming
@@ -574,7 +588,11 @@ function helperRow(s, list) {
       },
       h('span', { class: 'hs-session-mark' }, statusMark(statusOf(s))),
       h('span', { class: 'hs-stitle hs-session-label' }, s.title),
-      h('span', { class: 'hs-helper-mark', ...tipOn(`helper:${s.id}`, s.agentName) }, glyph('robot-2-line', 14)),
+      h(
+        'span',
+        { class: 'hs-helper-mark', ...tipOn(`helper:${s.id}`, s.agentName) },
+        glyph('robot-2-line', 14),
+      ),
     ),
   );
 }
@@ -688,13 +706,13 @@ function column(drawer) {
       h('div', { class: 'hs-subagent-slot' }),
       h('div', { class: 'hs-project-slot' }),
     ),
-    header(),
     h(
       'div',
       {
         class: 'hs-scroll hs-sidebar-scroll',
         onscroll: onListScroll,
         mount: (el) => {
+          state.scrollY = 0;
           el.addEventListener('mousedown', () => (dropped = false), true);
           el.addEventListener('click', (e) => dropped && e.stopPropagation(), true);
         },
@@ -702,6 +720,7 @@ function column(drawer) {
       h(
         'div',
         { class: 'hs-app-block' },
+        header(),
         h(
           'div',
           { class: 'hs-sess', 'data-open': 'true' },
@@ -711,7 +730,12 @@ function column(drawer) {
             h(
               'div',
               { class: 'hs-session-block' },
-              start > 0 && h('div', { key: 'above', class: 'hs-sidebar-spacer', style: `height: ${tops[start]}px` }),
+              start > 0 &&
+                h('div', {
+                  key: 'above',
+                  class: 'hs-sidebar-spacer',
+                  style: `height: ${tops[start]}px`,
+                }),
               rows
                 .slice(start, end)
                 .map((row) =>
@@ -724,7 +748,11 @@ function column(drawer) {
                         : newProjectRow(),
                 ),
               end < rows.length &&
-                h('div', { key: 'below', class: 'hs-sidebar-spacer', style: `height: ${total - tops[end]}px` }),
+                h('div', {
+                  key: 'below',
+                  class: 'hs-sidebar-spacer',
+                  style: `height: ${total - tops[end]}px`,
+                }),
               picked > 1 && selectionBar(picked),
             ),
           ),
@@ -863,7 +891,11 @@ function projectMenu(id) {
 }
 
 const newMenu = () => [
-  item({ icon: glyph('edit-2-fill', 14), label: 'New conversation', onClick: () => newSession(null) }),
+  item({
+    icon: glyph('edit-2-fill', 14),
+    label: 'New conversation',
+    onClick: () => newSession(null),
+  }),
   item({
     icon: folder(false, true, 14),
     label: 'New project',
@@ -992,12 +1024,20 @@ function instructionsView(project, draft) {
     );
   return h(
     'div',
-    { key: 'dialog', class: 'hs-sheet-shell', onclick: (e) => (e.stopPropagation(), closeDialog()) },
+    {
+      key: 'dialog',
+      class: 'hs-sheet-shell',
+      onclick: (e) => (e.stopPropagation(), closeDialog()),
+    },
     h(
       'div',
       { class: 'hs-sheet-box', role: 'dialog', onclick: stop },
       h('span', { class: 'hs-sheet-title' }, `Instructions for ${project.name}`),
-      h('span', { class: 'hs-sheet-hint' }, 'Every conversation in this project reads this before it starts.'),
+      h(
+        'span',
+        { class: 'hs-sheet-hint' },
+        'Every conversation in this project reads this before it starts.',
+      ),
       h('textarea', {
         class: 'hs-ta hs-sheet-input',
         rows: 7,
@@ -1065,7 +1105,12 @@ function dialogView() {
  *  else the page. */
 function boundary() {
   const column = layout() === 'side' && !state.dialog && root.querySelector('.hs-sidebar-column');
-  return { left: 0, top: 0, right: column ? column.getBoundingClientRect().right : innerWidth, bottom: innerHeight };
+  return {
+    left: 0,
+    top: 0,
+    right: column ? column.getBoundingClientRect().right : innerWidth,
+    bottom: innerHeight,
+  };
 }
 
 /** Places a popup under its mark from the mark's left edge, or above it
@@ -1357,7 +1402,9 @@ async function dropSessions(ids, target) {
   else ranks = ids.map((_, k) => Date.now() - k);
   const distinct = ranks.every(
     (r, k) =>
-      (k === 0 || ranks[k - 1] > r) && (above === null || r < above) && (below === null || r > below),
+      (k === 0 || ranks[k - 1] > r) &&
+      (above === null || r < above) &&
+      (below === null || r > below),
   );
   if (distinct) {
     for (const [k, id] of ids.entries()) await patch(id, project, ranks[k]);
@@ -1399,7 +1446,9 @@ function targetAt(x, y) {
   const row = rowsNow.find((r) => r.kind === 'session' && r.session.id === rowId);
   if (!row) return null;
   const list = rowsNow.flatMap((r) =>
-    r.kind === 'session' && r.list === row.list && !drag.ids.includes(r.session.id) ? [r.session.id] : [],
+    r.kind === 'session' && r.list === row.list && !drag.ids.includes(r.session.id)
+      ? [r.session.id]
+      : [],
   );
   const rect = el.getBoundingClientRect();
   const ins = y < rect.top + rect.height / 2 ? 'before' : 'after';
@@ -1535,7 +1584,8 @@ function noteTurns(sessions, first) {
     const turn = s.lastTurn?.id ?? null;
     const was = finished.get(s.id);
     finished.set(s.id, turn);
-    if (first || was === undefined || turn === null || turn === was || s.id === state.open) continue;
+    if (first || was === undefined || turn === null || turn === was || s.id === state.open)
+      continue;
     state.unread.add(s.id);
     changed = true;
   }
