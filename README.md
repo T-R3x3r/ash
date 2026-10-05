@@ -2,8 +2,8 @@
 
 The Hearthscale chat app: one agent over your own computer, in one chat. Ash
 reads your files, runs commands in its workspace, makes pictures, keeps
-notes, hands work to helpers, and uses whatever the plugins and connectors
-you attach offer.
+notes, hands work to helpers, and uses whatever the headless apps and
+connectors you attach offer.
 
 Ash is an ordinary Hearthscale app. Nothing in the platform knows its name;
 it installs from the Marketplace like any other app, and this repository is
@@ -13,7 +13,7 @@ an example of what an app with an agent looks like.
 
 | File | What it is |
 | --- | --- |
-| `app.json` | The manifest: id, name, the agent, its tools and roots, what it contributes. |
+| `app.json` | The manifest: id, name, the agent, its tools and roots, and the page it places in the rail. |
 | `views/ash.js` | Ash's page in its tab: the conversations and projects in a sidebar, and the chat the shell draws in the page's `chat` slot. |
 | `views/sheet.js` | Ash's sheets, in a modal the shell draws over the page: a delete to confirm and a project's instructions. |
 | `prompt/system.md` | The agent's system prompt. |
