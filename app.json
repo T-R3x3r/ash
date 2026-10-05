@@ -1,7 +1,7 @@
 {
   "id": "ash",
   "name": "Ash",
-  "version": "5.10.1",
+  "version": "6.0.0",
   "api": 4,
   "description": "A general assistant that reads, writes and runs things on your computer.",
   "icon": "icon.svg",
@@ -11,6 +11,9 @@
     "productivity"
   ],
   "payment": "free",
+  "environment": {
+    "kind": "process"
+  },
   "agent": {
     "name": "Ash",
     "model": {
@@ -63,5 +66,20 @@
   },
   "recommends": [
     "browser"
+  ],
+  "uses": [
+    "sessions",
+    "store"
+  ],
+  "surfaces": [
+    {
+      "id": "main",
+      "kind": "view",
+      "title": "Ash",
+      "placements": [
+        "rail"
+      ],
+      "entry": "views/ash.js"
+    }
   ]
 }
