@@ -27,7 +27,6 @@ const EDGE_SCROLL_PX = 24;
 /** Lists longer than this render only the rows the scroll shows. */
 const WINDOWED = 60;
 const OVERSCAN = 15;
-const MENU_CLOSE_MS = 140;
 /** The distance of a popup from its mark, and from the edges it stays in. */
 const OFFSET = 6;
 const PAD = 8;
@@ -39,9 +38,9 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 .ash-chat { flex: 1; min-width: 0; min-height: 0; }
 .hs-app-surface > .hs-sidebar-column.ash-drawer { flex: 1; width: auto; border-right: none; }
 .ash-head { cursor: default; }
-.ash-strip { flex: none; width: 40px; padding-top: 6px; display: flex; flex-direction: column; align-items: center; }
-.ash-bar { flex: none; height: 36px; padding: 0 6px; display: flex; align-items: center; }
-:is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: 28px; height: 29px; }
+.ash-strip { flex: none; width: calc(var(--space) * 10); padding-top: calc(var(--space) * 1.5); display: flex; flex-direction: column; align-items: center; }
+.ash-bar { flex: none; height: calc(var(--space) * 9); padding: 0 calc(var(--space) * 1.5); display: flex; align-items: center; }
+:is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7.25); }
 .ash-glyph { display: block; flex: none; width: 1em; height: 1em; line-height: 1; }
 .hs-shell :is(.hs-hovbox, .hs-hovbox-ink):active .ash-glyph { transform: var(--press); opacity: var(--press-fade); }
 `;
@@ -946,8 +945,7 @@ function menuView() {
       'div',
       {
         class: 'hs-menu hs-menu-surface',
-        'data-closing': menu.closing ? 'true' : 'false',
-        style: `min-width: min(${MENUS[menu.key][1]}px, calc(100vw - 16px))`,
+        style: `min-width: min(${MENUS[menu.key][1]}px, calc(100vw - var(--space) * 4))`,
       },
       items,
     ),
@@ -1018,43 +1016,30 @@ function placePopups() {
   const menuEl = root.querySelector('[data-popup="menu"]');
   if (menuEl) {
     if (state.menu.mark.isConnected) place(menuEl, state.menu.mark, MENUS[state.menu.key][1]);
-    else closeMenu(true);
+    else closeMenu();
   }
   const tipEl = root.querySelector('[data-popup="tip"]');
   const tipMark = tipEl && root.querySelector(`[data-tip="${CSS.escape(state.tip.key)}"]`);
   if (tipEl && tipMark) place(tipEl, tipMark, 0);
 }
 
-let menuTimer;
-
 /** Opens the menu of one key on one target from the pressed mark, or
  *  closes it when the same menu is open. */
 function openMenu(key, target, e) {
   e.stopPropagation();
-  clearTimeout(menuTimer);
   const menu = state.menu;
-  if (menu && menu.key === key && menu.target === target && !menu.closing) {
+  if (menu && menu.key === key && menu.target === target) {
     closeMenu();
     return;
   }
-  state.menu = { key, target, mark: e.currentTarget, closing: false };
+  state.menu = { key, target, mark: e.currentTarget };
   render();
 }
 
-/** Closes the open menu, at once or after its closing fade. */
-function closeMenu(now = false) {
-  if (!state.menu || (state.menu.closing && !now)) return;
-  clearTimeout(menuTimer);
-  if (now) {
-    state.menu = null;
-    render();
-    return;
-  }
-  state.menu = { ...state.menu, closing: true };
-  menuTimer = setTimeout(() => {
-    state.menu = null;
-    render();
-  }, MENU_CLOSE_MS);
+/** Closes the open menu. */
+function closeMenu() {
+  if (!state.menu) return;
+  state.menu = null;
   render();
 }
 
@@ -1111,7 +1096,7 @@ function show(id) {
 
 /** Shows a new conversation, which its first message makes in `project`. */
 function newSession(project) {
-  closeMenu(true);
+  closeMenu();
   state.open = null;
   state.project = project;
   state.family = null;
@@ -1551,7 +1536,7 @@ addEventListener(
   'keydown',
   (e) => {
     if (e.key !== 'Escape') return;
-    if (state.menu && !state.menu.closing) {
+    if (state.menu) {
       e.stopPropagation();
       e.preventDefault();
       closeMenu();
