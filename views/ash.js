@@ -147,34 +147,28 @@ const folder = (open, empty, size) =>
   glyph(`folder-${open ? 'open-' : ''}${empty ? 'line' : 'fill'}`, size);
 
 /** The mark in front of a conversation: an empty ring at rest, a turning
- *  arc while a turn runs, a filled dot when a turn finished unseen, a dot
- *  in the warning colour while a request waits for the person. The layers
- *  cross-fade, so a change never pops. */
+ *  arc on the ring while a turn runs, a filled dot when a turn finished
+ *  unseen, a dot in the warning colour while a request waits for the
+ *  person. */
 function statusMark(status) {
-  const fade = (on) => `opacity: ${on ? 1 : 0}; transition: opacity var(--dur);`;
   const ring = { cx: 7, cy: 7, r: 2.6 };
   return h(
     'svg',
     { class: 'hs-glyph', width: 14, height: 14, viewBox: '0 0 14 14' },
-    h('circle', {
-      ...ring,
-      fill: 'none',
-      stroke: 'var(--capt)',
-      'stroke-width': 1.1,
-      style: fade(status === 'rest' || status === 'working'),
-    }),
-    h('circle', {
-      ...ring,
-      class: 'hs-spin',
-      fill: 'none',
-      stroke: 'var(--mut)',
-      'stroke-width': 1.1,
-      'stroke-dasharray': '3.7 12.6',
-      'stroke-linecap': 'round',
-      style: fade(status === 'working'),
-    }),
-    h('circle', { ...ring, fill: 'var(--text)', style: fade(status === 'unread') }),
-    h('circle', { ...ring, fill: 'var(--warn)', style: fade(status === 'waiting') }),
+    (status === 'rest' || status === 'working') &&
+      h('circle', { ...ring, fill: 'none', stroke: 'var(--capt)', 'stroke-width': 1.1 }),
+    status === 'working' &&
+      h('circle', {
+        ...ring,
+        class: 'hs-spin',
+        fill: 'none',
+        stroke: 'var(--mut)',
+        'stroke-width': 1.1,
+        'stroke-dasharray': '3.7 12.6',
+        'stroke-linecap': 'round',
+      }),
+    status === 'unread' && h('circle', { ...ring, fill: 'var(--text)' }),
+    status === 'waiting' && h('circle', { ...ring, fill: 'var(--warn)' }),
   );
 }
 
