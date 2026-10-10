@@ -1,70 +1,22 @@
 # Ash
 
-The Hearthscale chat app: one agent over your own computer, in one chat. Ash
-reads your files, runs commands in its workspace, makes pictures, keeps
-notes, hands work to helpers, and uses whatever the headless apps and
-connectors you attach offer.
+Ash is an assistant you talk to in Hearthscale. Ask it a question, or give it a file or a folder to work on, and it reads, writes and runs what the task needs on your computer, then tells you what it did. It can also search the web with the Browser, make pictures, keep notes between conversations and hand parts of a big task to helpers.
 
-Ash is an ordinary Hearthscale app. Nothing in the platform knows its name;
-it installs from the Marketplace like any other app, and this repository is
-an example of what an app with an agent looks like.
+## Get started
 
-## The folder
+Click Ash's button on the rail and type what you need. A small task whose result you can check is a good first one:
 
-| File | What it is |
-| --- | --- |
-| `app.json` | The manifest: id, name, the agent, its tools and roots, and the page it places in the rail. |
-| `views/ash.js` | Ash's page in its tab: the conversations and projects in a sidebar, and the chat the shell draws in the page's `chat` slot. |
-| `views/sheet.js` | Ash's sheets, in a modal the shell draws over the page: a delete to confirm and a project's instructions. |
-| `prompt/system.md` | The agent's system prompt. |
-| `skills/` | The skills the agent carries, one folder with a `SKILL.md` each. |
-| `icon.svg` | The mark the client draws wherever Ash appears. |
+> Help me plan three dinners using rice, spinach, lemons and chickpeas. Make one shopping list for anything else I need.
 
-## Working on it
+Ash runs on a chat model that can use tools. Pick one in the model picker of the composer, or leave it on **Automatic**. If the picker shows **No model**, download a model in Hearthscale Server or connect a provider in **Settings → Providers**.
 
-With a Hearthscale platform running on this machine:
+To work on your own material, choose **+** in the composer: **Files…** attaches files, and **A folder** gives the conversation a folder to read, or to read and write. Conversations about the same thing can share a project, which gives them a folder and notes of their own.
 
-```
-hearthscale dev .
-```
+## What Ash asks for
 
-links this folder into the running platform, picks up every change, and
-asks once in the window before any code runs.
+- **Your files.** Ash reads the files in your home folder. It writes in its own workspace, in a project's folder and in the folders you give a conversation; a change anywhere else is a step that needs your yes.
+- **Commands.** Ash runs commands in a sandbox that keeps them to the folders it works in.
+- **Notes.** Ash keeps notes about your work between conversations. You can read, edit or switch them off in **Settings → Memory**.
+- **The Browser.** Installing Ash also installs the Browser, so Ash can search and read the web. You can leave it out on the install card; Ash then answers without the web.
 
-Each view is one module with no build step: the platform inlines
-`views/ash.js` or `views/sheet.js` into the document it frames, beside the design system's
-sheet (the `hs-*` classes) and the Remix Icon font (the `ri-*` classes), and
-maps `@modelcontextprotocol/ext-apps` to its own copy. It cannot import
-another file of the package.
-
-## Traps
-
-- The shell draws the chat over the page's `chat` slot, so nothing the page
-  draws shows there. Menus and tips stay inside the sidebar; a sheet opens
-  in a modal over the whole page, chat and all (`hearthscale/ui/open-modal`,
-  surface `sheet`), and closes itself; the narrow page opens the sidebar in
-  place of the chat.
-- The frame has no storage of its own: the open projects, the unread marks
-  and the folded sidebar live in Ash's store (`uses: store`).
-- Deleting a conversation or a project only goes through on a click inside
-  the sheet, so the call starts in the handler of the press that confirms it.
-  The page hears the deletion and moves its chat when it showed it.
-- A project's Open folder shows its folder in the system's file manager
-  (`openai/files/open`, `uses: files.open`); a view may open only a folder
-  of its own app.
-
-## Releasing
-
-Install the Hearthscale registry's GitHub App on this repository once. Then
-every release whose tag equals `version` in `app.json` is picked up by the
-Marketplace.
-
-```
-hearthscale pack .
-```
-
-builds the package to attach to the release.
-
-## Licence
-
-MIT. See `LICENSE`.
+The permission level, which you choose in the composer, decides how a step that needs your yes goes. At **Supervised**, Ash asks you first. At **Auto**, a review checks the step and refuses what fails it. At **Full access**, the step runs. [Permission levels](https://hearthscale.com/docs/app/settings/permissions#level) explains each one.
