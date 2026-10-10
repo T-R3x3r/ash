@@ -47,7 +47,7 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 
 // ---------- The bridge ----------
 
-const app = new App({ name: 'Ash', version: '6.1.0' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.1.2' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
@@ -136,6 +136,20 @@ function sync(parent, kids, svg) {
 }
 
 const stop = (e) => e.stopPropagation();
+
+/** What makes a drawn element a button named `label`, which the keyboard
+ *  reaches and presses with Enter or Space. A key on a control inside it
+ *  is that control's own. */
+const pressable = (label) => ({
+  role: 'button',
+  tabindex: '0',
+  'aria-label': label,
+  onkeydown: (e) => {
+    if (e.target !== e.currentTarget || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    e.currentTarget.click();
+  },
+});
 
 /** A Remix Icon of the kit, by its remixicon.com name. */
 const glyph = (name, size) =>
@@ -251,7 +265,13 @@ function render() {
 
 function draw() {
   mounted = [];
+  // A row that moves in the list is taken out and put back, which drops
+  // the focus it holds; it takes the focus again where it lands.
+  const focused = document.activeElement;
   sync(root, [page()], false);
+  if (focused !== document.activeElement && focused?.isConnected && root.contains(focused)) {
+    focused.focus();
+  }
   for (const [el, hook] of mounted) hook(el);
   measureRows();
   placePopups();
@@ -309,10 +329,14 @@ const tipOn = (key, text) => {
 };
 
 /** A control of the sidebar's own: the rows' action, always shown. */
-const control = (props, child) =>
+const control = (label, props, child) =>
   h(
     'span',
-    { ...props, class: `hs-hovink hs-inkmut hs-sidebar-rowact ${props.class ?? ''}` },
+    {
+      ...pressable(label),
+      ...props,
+      class: `hs-hovink hs-inkmut hs-sidebar-rowact ${props.class ?? ''}`,
+    },
     child,
   );
 
@@ -322,6 +346,7 @@ function folded(shape) {
     'div',
     { key: shape, class: `ash-${shape}` },
     control(
+      'Show sidebar',
       {
         onclick: (e) => {
           e.stopPropagation();
@@ -332,6 +357,7 @@ function folded(shape) {
       glyph('sidebar-unfold-line', 16),
     ),
     control(
+      'New conversation',
       {
         onclick: (e) => {
           e.stopPropagation();
@@ -355,6 +381,7 @@ function header() {
     h('span', { class: 'hs-sidebar-mark' }, mark()),
     'Ash',
     control(
+      'Hide sidebar',
       {
         onclick: (e) => {
           e.stopPropagation();
@@ -367,6 +394,7 @@ function header() {
     h('span', { class: 'hs-flex-spacer' }),
     rowAction(
       {
+        label: 'New',
         tight: true,
         open: state.menu?.key === 'new',
         onClick: (e) => openMenu('new', null, e),
@@ -376,10 +404,11 @@ function header() {
   );
 }
 
-function rowAction({ tight, open, onClick }, child) {
+function rowAction({ label, tight, open, onClick }, child) {
   return h(
     'span',
     {
+      ...pressable(label),
       class: 'hs-rowact hs-hovink hs-inkmut hs-sidebar-rowact',
       'data-open': open ? 'true' : 'false',
       'data-tight': tight ? 'true' : undefined,
@@ -510,6 +539,7 @@ function sessionRow(s, list, order) {
         'data-ins': ins,
         'data-filed': list ? 'true' : undefined,
         'data-dragged': state.drag?.ids.includes(s.id) ? 'true' : undefined,
+        ...pressable(s.title),
         onmousedown: (e) => pressRow(e, s.id),
         onclick: (e) =>
           clickSession(s.id, { shift: e.shiftKey, ctrl: e.ctrlKey || e.metaKey }, order),
@@ -526,15 +556,22 @@ function sessionRow(s, list, order) {
             },
           })
         : h('span', { class: 'hs-stitle hs-session-label' }, s.title),
+      // Keyed, so the pin mark coming or going keeps the actions' nodes and
+      // the focus one of them holds.
       s.pinned &&
         !renaming &&
-        h('span', { class: 'hs-pinned hs-sidebar-pin' }, glyph('pushpin-2-fill', 12)),
+        h('span', { key: 'pin', class: 'hs-pinned hs-sidebar-pin' }, glyph('pushpin-2-fill', 12)),
       h(
         'span',
-        { class: 'hs-rowact hs-session-actions', 'data-open': menuOpen ? 'true' : 'false' },
+        {
+          key: 'actions',
+          class: 'hs-rowact hs-session-actions',
+          'data-open': menuOpen ? 'true' : 'false',
+        },
         h(
           'span',
           {
+            ...pressable(s.pinned ? 'Unpin' : 'Pin'),
             class: `hs-hovink ${s.pinned ? 'hs-inktext' : 'hs-inkmut'} hs-session-pin-action`,
             onmousedown: stop,
             onclick: (e) => {
@@ -548,6 +585,7 @@ function sessionRow(s, list, order) {
         h(
           'span',
           {
+            ...pressable('More'),
             class: 'hs-hovink hs-inkmut hs-session-menu-action',
             onmousedown: stop,
             onclick: (e) => {
@@ -574,6 +612,7 @@ function helperRow(s, list) {
         class: `hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row${state.open === s.id ? ' hs-boxsel' : ''}`,
         'data-child': 'true',
         'data-filed': list ? 'true' : undefined,
+        ...pressable(s.title),
         onclick: () => clickSession(s.id, { shift: false, ctrl: false }, [s.id]),
       },
       h('span', { class: 'hs-session-mark' }, statusMark(statusOf(s))),
@@ -599,6 +638,8 @@ function projectRow({ project, open, count }) {
         class: `hs-projrow hs-hovbox-ink hs-inkmut hs-project-row${menuOpen || over ? ' hs-boxsel' : ''}`,
         'data-drop': `project:${project.id}`,
         'data-over': over ? 'true' : undefined,
+        ...pressable(project.name),
+        'aria-expanded': open ? 'true' : 'false',
         onclick: () => clickProject(project.id),
       },
       h('span', { class: 'hs-project-mark' }, folder(open, count === 0, 16)),
@@ -622,9 +663,12 @@ function projectRow({ project, open, count }) {
       h(
         'span',
         { class: 'hs-rowact hs-session-actions', 'data-open': menuOpen ? 'true' : 'false' },
-        rowAction({ onClick: (e) => openMenu('project', project.id, e) }, glyph('more-fill', 16)),
         rowAction(
-          { tight: true, onClick: () => newSession(project.id) },
+          { label: 'More', onClick: (e) => openMenu('project', project.id, e) },
+          glyph('more-fill', 16),
+        ),
+        rowAction(
+          { label: 'New conversation', tight: true, onClick: () => newSession(project.id) },
           h('span', { class: 'hs-sidebar-plus' }, glyph('add-fill', 16)),
         ),
       ),
@@ -661,6 +705,7 @@ function selectionBar(count) {
     h(
       'span',
       {
+        ...pressable(label),
         class: `hs-hovink ${danger ? 'hs-inkbad' : 'hs-inkmut'} hs-selection-action`,
         onmousedown: stop,
         onclick: (e) => {
@@ -792,6 +837,7 @@ function item({ icon, label, danger, onClick }) {
         closeMenu();
         onClick();
       },
+      onkeydown: menuKey,
     },
     icon,
     h('span', { class: 'hs-menu-label' }, h('span', { class: 'hs-menu-title' }, label)),
@@ -799,6 +845,21 @@ function item({ icon, label, danger, onClick }) {
 }
 
 const divider = () => h('div', { class: 'hs-menu-divider' });
+
+/** A key on a menu item: Enter or Space chooses it, and the arrows move the
+ *  focus to the item below or above, round the ends. */
+function menuKey(e) {
+  const here = e.currentTarget;
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault();
+    here.click();
+  } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    const items = [...here.parentElement.querySelectorAll('[role="menuitem"]')];
+    const step = e.key === 'ArrowDown' ? 1 : -1;
+    items[(items.indexOf(here) + step + items.length) % items.length].focus();
+  }
+}
 
 function sessionMenu(id) {
   const s = known(id);
@@ -1009,8 +1070,12 @@ function place(el, mark, menu) {
 function placePopups() {
   const menuEl = root.querySelector('[data-popup="menu"]');
   if (menuEl) {
-    if (state.menu.mark.isConnected) place(menuEl, state.menu.mark, MENUS[state.menu.key][1]);
-    else closeMenu();
+    if (state.menu.mark.isConnected) {
+      place(menuEl, state.menu.mark, MENUS[state.menu.key][1]);
+      if (state.menu.keyboard && !menuEl.contains(document.activeElement)) {
+        menuEl.querySelector('[role="menuitem"]')?.focus();
+      }
+    } else closeMenu();
   }
   const tipEl = root.querySelector('[data-popup="tip"]');
   const tipMark = tipEl && root.querySelector(`[data-tip="${CSS.escape(state.tip.key)}"]`);
@@ -1018,7 +1083,8 @@ function placePopups() {
 }
 
 /** Opens the menu of one key on one target from the pressed mark, or
- *  closes it when the same menu is open. */
+ *  closes it when the same menu is open. A key's press, whose click counts
+ *  no pointer press, opens it with the focus on its first item. */
 function openMenu(key, target, e) {
   e.stopPropagation();
   const menu = state.menu;
@@ -1026,15 +1092,18 @@ function openMenu(key, target, e) {
     closeMenu();
     return;
   }
-  state.menu = { key, target, mark: e.currentTarget };
+  state.menu = { key, target, mark: e.currentTarget, keyboard: e.detail === 0 };
   render();
 }
 
-/** Closes the open menu. */
+/** Closes the open menu; one a key opened gives the focus back to its
+ *  mark. */
 function closeMenu() {
   if (!state.menu) return;
+  const { mark, keyboard } = state.menu;
   state.menu = null;
   render();
+  if (keyboard && mark.isConnected) mark.focus();
 }
 
 /** Opens a sheet in a modal over the page, on the press that asks for
