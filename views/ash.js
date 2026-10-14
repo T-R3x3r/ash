@@ -42,12 +42,13 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 .ash-bar { flex: none; height: calc(var(--space) * 9); padding: 0 calc(var(--space) * 1.5); display: flex; align-items: center; }
 :is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7.25); }
 .ash-glyph { display: block; flex: none; width: 1em; height: 1em; line-height: 1; }
+.ash-turning { display: grid; }
 .hs-shell :is(.hs-hovbox, .hs-hovbox-ink):active .ash-glyph { transform: var(--press); opacity: var(--press-fade); }
 `;
 
 // ---------- The bridge ----------
 
-const app = new App({ name: 'Ash', version: '6.1.3' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.1.4' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
@@ -163,10 +164,12 @@ const folder = (open, empty, size) =>
 /** The mark in front of a conversation: an empty ring at rest, a turning
  *  arc on the ring while a turn runs, a filled dot when a turn finished
  *  unseen, a dot in the warning colour while a request waits for the
- *  person. */
+ *  person. While a turn runs the whole mark turns in a box of its own:
+ *  the compositor turns an HTML box, where a shape inside the SVG would
+ *  draw the page again on every frame. */
 function statusMark(status) {
   const ring = { cx: 7, cy: 7, r: 2.6 };
-  return h(
+  const glyph = h(
     'svg',
     { class: 'hs-glyph', width: 14, height: 14, viewBox: '0 0 14 14' },
     (status === 'rest' || status === 'working') &&
@@ -174,7 +177,6 @@ function statusMark(status) {
     status === 'working' &&
       h('circle', {
         ...ring,
-        class: 'hs-spin',
         fill: 'none',
         stroke: 'var(--mut)',
         'stroke-width': 1.1,
@@ -184,6 +186,7 @@ function statusMark(status) {
     status === 'unread' && h('circle', { ...ring, fill: 'var(--text)' }),
     status === 'waiting' && h('circle', { ...ring, fill: 'var(--warn)' }),
   );
+  return status === 'working' ? h('span', { class: 'ash-turning hs-spin' }, glyph) : glyph;
 }
 
 /** Ash's mark, as `icon.svg` in the package draws it. */
