@@ -64,7 +64,7 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 .ash-finder-field { display: flex; align-items: center; gap: calc(var(--space) * 3); padding: calc(var(--space) * 3.5) calc(var(--space) * 3.5) calc(var(--space) * 3.5) calc(var(--space) * 4.5); color: var(--dim); }
 .ash-finder-field > input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: inherit; font-size: var(--fs-title); color: var(--text); }
 .ash-finder-field > input::-webkit-search-cancel-button { display: none; }
-.ash-finder-esc { padding: calc(var(--space) * 1.5) calc(var(--space) * 2.5); border: var(--bw) solid var(--tipline); border-radius: var(--r-ctl); background: var(--hov); color: var(--mut); font-family: var(--font-mono); font-size: var(--fs-sm); cursor: pointer; }
+.ash-finder-esc { padding: calc(var(--space) * 1.5) calc(var(--space) * 2.5); border: var(--bw) solid var(--tipline); border-radius: var(--r-ctl); background: var(--hov); color: var(--mut); font: inherit; font-size: var(--fs-sm); cursor: pointer; }
 .ash-finder-esc:hover { color: var(--text); }
 .ash-finder-results { max-height: 50vh; padding: var(--space) calc(var(--space) * 2) calc(var(--space) * 2); border-top: var(--bw) solid var(--tipline); overflow-y: auto; overscroll-behavior: contain; }
 .ash-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: calc(var(--space) * 0.5); height: calc(var(--project-row-height) - 1px); padding: 0 var(--space); border: var(--bw) solid var(--tipline); box-sizing: border-box; }
