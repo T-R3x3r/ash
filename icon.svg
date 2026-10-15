@@ -1,10 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="102 102 620 620" role="img" aria-label="Ash">
   <title>Ash</title>
-  <!-- Hearthscale's five-bar mark alone, in the colours of embers: each bar
+  <!-- Hearthscale's five-bar mark alone, glowing as embers do: each bar
        fades from orange at the top through red to a deep ember red at its
-       base, over a faint red glow. The bars sit on the grid of
-       Hearthscale's own app icon (bar centres 169 to 655, base 594, 81
-       wide), and the square view box is centred on the mark. -->
+       base, a soft core glows inside it and fades into the bar's own
+       colours, kept to the bar's shape, and a faint red glow lies around
+       the mark. The bars sit on the grid of Hearthscale's own app icon (bar
+       centres 169 to 655, base 594, 81 wide), and the square view box is
+       centred on the mark. -->
   <defs>
     <linearGradient id="ember" x1="412" y1="190" x2="412" y2="634" gradientUnits="userSpaceOnUse">
       <stop stop-color="#ff7a2e" />
@@ -12,9 +14,25 @@
       <stop offset="0.7" stop-color="#a3200f" />
       <stop offset="1" stop-color="#5a150b" />
     </linearGradient>
+    <linearGradient id="core" x1="412" y1="190" x2="412" y2="634" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffd27a" />
+      <stop offset="0.3" stop-color="#ffa24a" stop-opacity="0.85" />
+      <stop offset="0.65" stop-color="#ff6a2a" stop-opacity="0.35" />
+      <stop offset="0.95" stop-color="#e0401c" stop-opacity="0" />
+    </linearGradient>
     <filter id="halo" x="-30%" y="-30%" width="160%" height="160%">
       <feGaussianBlur stdDeviation="22" />
     </filter>
+    <filter id="soft" x="-60%" y="-30%" width="220%" height="160%">
+      <feGaussianBlur stdDeviation="18" />
+    </filter>
+    <clipPath id="bars">
+      <rect x="128.5" y="351" width="81" height="283.5" rx="40.5" />
+      <rect x="250" y="256.5" width="81" height="378" rx="40.5" />
+      <rect x="371.5" y="189.5" width="81" height="445" rx="40.5" />
+      <rect x="493" y="256.5" width="81" height="378" rx="40.5" />
+      <rect x="614.5" y="351" width="81" height="283.5" rx="40.5" />
+    </clipPath>
   </defs>
   <g fill="#ff4a1a" opacity="0.2" filter="url(#halo)">
     <rect x="128.5" y="351" width="81" height="283.5" rx="40.5" />
@@ -29,5 +47,14 @@
     <rect x="371.5" y="189.5" width="81" height="445" rx="40.5" />
     <rect x="493" y="256.5" width="81" height="378" rx="40.5" />
     <rect x="614.5" y="351" width="81" height="283.5" rx="40.5" />
+  </g>
+  <g clip-path="url(#bars)">
+    <g fill="url(#core)" opacity="0.7" filter="url(#soft)">
+      <rect x="149" y="371.5" width="40" height="262.5" rx="20" />
+      <rect x="270.5" y="277" width="40" height="357" rx="20" />
+      <rect x="392" y="210" width="40" height="404" rx="20" />
+      <rect x="513.5" y="277" width="40" height="357" rx="20" />
+      <rect x="635" y="371.5" width="40" height="262.5" rx="20" />
+    </g>
   </g>
 </svg>

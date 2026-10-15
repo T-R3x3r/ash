@@ -208,6 +208,12 @@ const markBars = () =>
     h('rect', { x: x - 40.5, y: top - 40.5, width: 81, height: 675 - top, rx: 40.5 }),
   );
 
+/** The soft core inside each bar. */
+const markCores = () =>
+  BARS.map(([x, top]) =>
+    h('rect', { x: x - 20, y: top - 20, width: 40, height: 634 - top, rx: 20 }),
+  );
+
 /** Ash's mark, as `icon.svg` in the package draws it. */
 const mark = (size) =>
   h(
@@ -231,13 +237,32 @@ const mark = (size) =>
         h('stop', { offset: 1, 'stop-color': '#5a150b' }),
       ),
       h(
+        'linearGradient',
+        { id: 'ash-core', x1: 412, y1: 190, x2: 412, y2: 634, gradientUnits: 'userSpaceOnUse' },
+        h('stop', { 'stop-color': '#ffd27a' }),
+        h('stop', { offset: 0.3, 'stop-color': '#ffa24a', 'stop-opacity': 0.85 }),
+        h('stop', { offset: 0.65, 'stop-color': '#ff6a2a', 'stop-opacity': 0.35 }),
+        h('stop', { offset: 0.95, 'stop-color': '#e0401c', 'stop-opacity': 0 }),
+      ),
+      h(
         'filter',
         { id: 'ash-glow', x: '-30%', y: '-30%', width: '160%', height: '160%' },
         h('feGaussianBlur', { stdDeviation: 22 }),
       ),
+      h(
+        'filter',
+        { id: 'ash-soft', x: '-60%', y: '-30%', width: '220%', height: '160%' },
+        h('feGaussianBlur', { stdDeviation: 18 }),
+      ),
+      h('clipPath', { id: 'ash-bars' }, markBars()),
     ),
     h('g', { fill: '#ff4a1a', opacity: 0.2, filter: 'url(#ash-glow)' }, markBars()),
     h('g', { fill: 'url(#ash-ember)' }, markBars()),
+    h(
+      'g',
+      { 'clip-path': 'url(#ash-bars)' },
+      h('g', { fill: 'url(#ash-core)', opacity: 0.7, filter: 'url(#ash-soft)' }, markCores()),
+    ),
   );
 
 /** A project folder, open or closed, drawn in outline when it holds no
