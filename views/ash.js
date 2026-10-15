@@ -333,6 +333,9 @@ const state = {
   /** What the search panel holds while it is open; null while it is
    *  closed. */
   finding: null,
+  /** Whether the sidebar is sliding aside or back; the folded bar and its
+   *  hole in the chat wait for the slide's end. */
+  sliding: false,
   renaming: null,
   renamingProject: null,
   creatingProject: false,
@@ -455,14 +458,7 @@ function side() {
   const shown = state.shown;
   return h(
     'div',
-    {
-      key: 'side',
-      class: 'ash-side',
-      'data-shown': shown ? 'true' : 'false',
-      ontransitionend: (e) => {
-        if (e.target === e.currentTarget && e.propertyName === 'width') reportSlots();
-      },
-    },
+    { key: 'side', class: 'ash-side', 'data-shown': shown ? 'true' : 'false' },
     h('div', { key: 'probe', class: 'ash-probe' }),
     column(false, !shown),
   );
@@ -470,8 +466,10 @@ function side() {
 
 /** The bar a folded sidebar leaves over the chat's top left corner: a new
  *  conversation, the search and the press that shows the sidebar again;
- *  out of reach while the sidebar shows. */
-function folded(shown) {
+ *  out of reach while the sidebar shows, and while it slides aside, so the
+ *  bar comes in with its hole once the chat has settled. */
+function folded(away) {
+  const shown = away && !state.sliding;
   return h(
     'div',
     { key: 'float', class: 'ash-float', 'data-shown': shown ? 'true' : 'false', inert: !shown },
@@ -1569,7 +1567,8 @@ function reportSlots() {
   if (chat) {
     const r = chat.getBoundingClientRect();
     const settles = glide && state.wide;
-    const bar = !glide && layout() === 'folded' && root.querySelector('.ash-float');
+    const bar =
+      !glide && !state.sliding && layout() === 'folded' && root.querySelector('.ash-float');
     slots.push({
       id: 'chat',
       kind: 'chat',
@@ -1621,11 +1620,28 @@ function newSession(project) {
   render();
 }
 
+let slideTimer;
+
+/** Starts the sidebar's slide, which ends after the kit's slow duration:
+ *  then the folded bar comes in with its hole, and the chat's place is
+ *  reported as it settled. */
+function slide() {
+  const token = getComputedStyle(root).getPropertyValue('--dur-slow').trim();
+  const ms = token.endsWith('ms') ? parseFloat(token) : parseFloat(token) * 1000;
+  state.sliding = true;
+  glide = true;
+  clearTimeout(slideTimer);
+  slideTimer = setTimeout(() => {
+    state.sliding = false;
+    render();
+  }, ms || 0);
+}
+
 function toggle() {
   state.tip = null;
   if (state.wide) {
     state.shown = !state.shown;
-    glide = true;
+    slide();
     keep('sidebar');
   } else state.drawer = !state.drawer;
   render();

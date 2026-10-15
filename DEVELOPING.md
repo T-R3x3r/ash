@@ -46,13 +46,14 @@ another file of the package.
 - The sidebar folds and opens over the kit's slow duration, and the report
   of the chat's place that goes with it asks the shell to glide the chat
   (`animate`), so the two move together. The report names the place the
-  chat takes once the side's width settles, and the end of the side's
-  width transition reports it again.
+  chat takes once the side's width settles, and the slide's end, a timer
+  of that duration, reports it again.
 - Folded, the sidebar leaves a small bar over the chat's top left corner.
   The chat's slot keeps a hole there (`holes`), so the bar shows above the
-  chat and takes the pointer. The hole is reported once the slide settles,
-  not while the chat glides, since a hole stands where the slot's insets
-  put it.
+  chat and takes the pointer. The bar and its hole come in together at the
+  slide's end, not while the chat glides: a hole stands where the slot's
+  insets put it, and a bar drawn earlier shows over the narrowing sidebar
+  and then goes under the chat.
 - The frame has no storage of its own: the open projects, the unread marks
   and the folded sidebar live in Ash's store (`uses: store`).
 - Deleting a conversation or a project only goes through on a click inside
