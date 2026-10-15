@@ -1,41 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 824 824" role="img" aria-label="Ash">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="102 102 620 620" role="img" aria-label="Ash">
   <title>Ash</title>
-  <!-- Hearthscale's five-bar mark on glass in the colours of embers: the
-       tile fades from dark red at the top to black at the bottom, with the
-       glass of Hearthscale Server's tile (a light fading from the top edge,
-       a bright line along that edge, a rim and a shade along the bottom
-       edge), and the bars are a warm white. The tile and the bars sit on
-       the grid of Hearthscale's own app icon: an 824 tile, corner radius
-       185, the bars 81 wide at the same places. -->
+  <!-- Hearthscale's five-bar mark alone, in the colours of embers: each bar
+       fades from orange at the top through red to almost black at its
+       base, over a faint red glow. The bars sit on the grid of
+       Hearthscale's own app icon (bar centres 169 to 655, base 594, 81
+       wide), and the square view box is centred on the mark. -->
   <defs>
-    <linearGradient id="base" x1="412" y1="0" x2="412" y2="824" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#9c2616" />
-      <stop offset="1" stop-color="#0b0505" />
+    <linearGradient id="ember" x1="412" y1="190" x2="412" y2="634" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ff7a2e" />
+      <stop offset="0.32" stop-color="#e0401c" />
+      <stop offset="0.68" stop-color="#8a160c" />
+      <stop offset="1" stop-color="#160504" />
     </linearGradient>
-    <linearGradient id="light" x1="412" y1="0" x2="412" y2="824" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#ffffff" stop-opacity="0.18" />
-      <stop offset="0.62" stop-color="#ffffff" stop-opacity="0" />
-    </linearGradient>
-    <linearGradient id="bars" x1="412" y1="190" x2="412" y2="634" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#fff7f0" />
-      <stop offset="1" stop-color="#ffc29c" />
-    </linearGradient>
-    <clipPath id="tile">
-      <rect width="824" height="824" rx="185" />
-    </clipPath>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="22" />
+    </filter>
   </defs>
-  <rect width="824" height="824" rx="185" fill="url(#base)" />
-  <g clip-path="url(#tile)">
-    <rect width="824" height="824" fill="url(#light)" />
-    <rect width="824" height="6" fill="#ffffff" fill-opacity="0.35" />
-    <rect y="818" width="824" height="6" fill="#000000" fill-opacity="0.5" />
-  </g>
-  <rect x="3" y="3" width="818" height="818" rx="182" fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="6" />
-  <g stroke="url(#bars)" stroke-width="81" stroke-linecap="round" fill="none">
-    <path d="M169 594V391.5" />
-    <path d="M290.5 594V297" />
-    <path d="M412 594V230" />
-    <path d="M533.5 594V297" />
-    <path d="M655 594V391.5" />
+  <g stroke-width="81" stroke-linecap="round" fill="none">
+    <g stroke="#ff4a1a" opacity="0.2" filter="url(#glow)">
+      <path d="M169 594V391.5" />
+      <path d="M290.5 594V297" />
+      <path d="M412 594V230" />
+      <path d="M533.5 594V297" />
+      <path d="M655 594V391.5" />
+    </g>
+    <g stroke="url(#ember)">
+      <path d="M169 594V391.5" />
+      <path d="M290.5 594V297" />
+      <path d="M412 594V230" />
+      <path d="M533.5 594V297" />
+      <path d="M655 594V391.5" />
+    </g>
   </g>
 </svg>
