@@ -4,16 +4,18 @@
  * is drawn with the kit's `hs-*` classes and icons, reads and changes Ash's
  * conversations through the `sessions` extension, and keeps the open
  * projects, the unread marks and the folded sidebar in Ash's store. Its top
- * holds a new conversation, the search and the press that folds it, then a
- * new project, or the search field while a search is open; the list below
- * scrolls with its bar over the right end of the rows.
+ * holds Ash's mark and name with the search and the press that folds it,
+ * then a new conversation and a new project, or the search field while a
+ * search is open; the list below scrolls with its bar over the right end of
+ * the rows.
  *
- * Nothing the page draws shows over the slot, so the page's menus and tips
- * stay inside the sidebar; its sheets open in a modal over the page
- * (`views/sheet.js`), which the shell draws over the chat as well.
- * Folded on a wide page, the sidebar leaves a strip beside the chat. Below
- * the wide width it folds into a bar above the chat, and opens over the
- * whole page in place of the chat.
+ * The shell draws the chat over the page's `chat` slot, so while a menu, a
+ * tip or a drag's label shows, the page covers the slot, and the shell lays
+ * the chat under the page until it closes. The page's sheets open in a
+ * modal over the page (`views/sheet.js`), which the shell draws over the
+ * chat as well. Folded on a wide page, the sidebar narrows to a strip beside
+ * the chat, and the chat glides with it. Below the wide width it folds into
+ * a bar above the chat, and opens over the whole page in place of the chat.
  */
 import {
   App,
@@ -40,14 +42,29 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 .ash[data-shape='bar'] { flex-direction: column; }
 .ash-chat { flex: 1; min-width: 0; min-height: 0; }
 .hs-app-surface > .hs-sidebar-column.ash-drawer { flex: 1; width: auto; border-right: none; }
-.ash-top { flex: none; display: flex; align-items: flex-start; gap: var(--space); padding-right: var(--pad-sidebar); }
-.ash-top > .hs-session-slot { flex: 1; min-width: 0; }
+.ash-head { flex: none; display: flex; align-items: center; gap: var(--space); height: calc(var(--space) * 9); padding: 0 var(--pad-sidebar) var(--space) var(--space); }
+.ash-brand { flex: 1; min-width: 0; display: flex; align-items: center; gap: calc(var(--space) * 2); color: var(--text); cursor: default; user-select: none; }
+.ash-brand > .hs-lockup-word { top: 0; font-size: var(--fs-title); }
+.ash-mark { display: block; flex: none; }
+.ash-head > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7); }
 .ash-actions { flex: none; display: flex; flex-direction: column; padding: 0 var(--pad-sidebar) calc(var(--space) * 3) 0; }
+.ash-side { position: relative; flex: none; display: flex; width: var(--w-sidebar); overflow: hidden; transition: width var(--dur-slow) var(--ease-out); }
+.ash-side[data-shown='false'] { width: calc(var(--space) * 10); }
+.ash-side::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; border-right: var(--bw) solid var(--line); pointer-events: none; transition: opacity var(--dur-slow) var(--ease-out); }
+.ash-side[data-shown='false']::after { opacity: 0; }
+.ash-side > .hs-sidebar-column { flex: none; transition: opacity var(--dur-slow) var(--ease-out); }
+.ash-side[data-shown='false'] > .hs-sidebar-column { opacity: 0; transition-duration: var(--dur); }
+.ash-side > .ash-strip { position: absolute; top: 0; bottom: 0; left: 0; opacity: 0; transition: opacity var(--dur) var(--ease-out); }
+.ash-side[data-shown='false'] > .ash-strip { opacity: 1; transition-duration: var(--dur-slow); }
+.ash-probe { position: absolute; height: 0; visibility: hidden; }
+.ash-probe[data-for='shown'] { width: var(--w-sidebar); }
+.ash-probe[data-for='folded'] { width: calc(var(--space) * 10); }
+.ash-arrive { animation: hsPop var(--dur) var(--ease-out); }
 .ash .hs-session-block { padding-left: 0; }
 .ash-none { padding: calc(var(--space) * 2) calc(var(--space) * 2.5) calc(var(--space) * 2) calc(var(--space) * 7); font-size: var(--fs-sm); color: var(--mut); }
-.ash-strip { flex: none; width: calc(var(--space) * 10); padding-top: var(--pad-sidebar); display: flex; flex-direction: column; align-items: center; }
+.ash-strip { flex: none; width: calc(var(--space) * 10); padding-top: calc(var(--pad-sidebar) + var(--space)); display: flex; flex-direction: column; align-items: center; }
 .ash-bar { flex: none; height: calc(var(--space) * 9); padding: 0 calc(var(--space) * 1.5); display: flex; align-items: center; }
-:is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7.25); }
+:is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7); }
 .ash-glyph { display: block; flex: none; width: 1em; height: 1em; line-height: 1; }
 .ash-turning { display: grid; }
 .hs-shell :is(.hs-hovbox, .hs-hovbox-ink):active .ash-glyph { transform: var(--press); opacity: var(--press-fade); }
@@ -168,6 +185,52 @@ const glyph = (name, size) =>
 const ownGlyph = (name, size) =>
   h('i', { class: `hs-icon hs-glyph-${name} ash-glyph`, style: `font-size: ${size}px` });
 
+/** The bars of Hearthscale's mark, as `icon.svg` draws them. */
+const markBars = () =>
+  [
+    [169, 391.5],
+    [290.5, 297],
+    [412, 230],
+    [533.5, 297],
+    [655, 391.5],
+  ].map(([x, top]) => h('path', { d: `M${x} 594V${top}` }));
+
+/** Ash's mark, as `icon.svg` in the package draws it. */
+const mark = (size) =>
+  h(
+    'svg',
+    {
+      class: 'ash-mark',
+      width: size,
+      height: size,
+      viewBox: '102 102 620 620',
+      'aria-hidden': 'true',
+    },
+    h(
+      'defs',
+      {},
+      h(
+        'linearGradient',
+        { id: 'ash-ember', x1: 412, y1: 190, x2: 412, y2: 634, gradientUnits: 'userSpaceOnUse' },
+        h('stop', { 'stop-color': '#ff7a2e' }),
+        h('stop', { offset: 0.32, 'stop-color': '#e0401c' }),
+        h('stop', { offset: 0.68, 'stop-color': '#8a160c' }),
+        h('stop', { offset: 1, 'stop-color': '#160504' }),
+      ),
+      h(
+        'filter',
+        { id: 'ash-glow', x: '-30%', y: '-30%', width: '160%', height: '160%' },
+        h('feGaussianBlur', { stdDeviation: 22 }),
+      ),
+    ),
+    h(
+      'g',
+      { 'stroke-width': 81, 'stroke-linecap': 'round', fill: 'none' },
+      h('g', { stroke: '#ff4a1a', opacity: 0.2, filter: 'url(#ash-glow)' }, markBars()),
+      h('g', { stroke: 'url(#ash-ember)' }, markBars()),
+    ),
+  );
+
 /** A project folder, open or closed, drawn in outline when it holds no
  *  conversation. */
 const folder = (open, empty, size) =>
@@ -234,6 +297,8 @@ const state = {
   /** What the search field holds while a search is open; null while none
    *  is. */
   search: null,
+  /** The project that opened since the last draw, whose rows come in. */
+  arriving: null,
   renaming: null,
   renamingProject: null,
   creatingProject: false,
@@ -276,8 +341,10 @@ function draw() {
     focused.focus();
   }
   for (const [el, hook] of mounted) hook(el);
+  state.arriving = null;
   measureRows();
   placePopups();
+  coverSlots();
   reportSlots();
 }
 
@@ -294,7 +361,7 @@ function page() {
   return h(
     'div',
     { class: 'hs-app-surface ash', 'data-shape': shape, onclick: () => closeMenu() },
-    shape === 'strip' || shape === 'bar' ? folded(shape) : column(shape === 'drawer'),
+    state.wide ? side() : shape === 'bar' ? folded('bar') : column(true),
     shape !== 'drawer' && h('main', { key: 'chat', class: 'ash-chat' }),
     menuView(),
     tipView(),
@@ -311,12 +378,14 @@ function page() {
   );
 }
 
-/** The words of each mark's tip, as the draw under way gives them. */
+/** The words of each mark's tip and the side of the mark it shows on, as
+ *  the draw under way gives them. */
 const tipTexts = new Map();
 
-/** The hover wiring of a mark's tip. */
-const tipOn = (key, text) => {
-  tipTexts.set(key, text);
+/** The hover wiring of a mark's tip, which shows below the mark, or at its
+ *  right for a mark in a column of marks. */
+const tipOn = (key, text, side = 'below') => {
+  tipTexts.set(key, { text, side });
   return {
     'data-tip': key,
     onmouseenter: () => {
@@ -343,11 +412,35 @@ const control = (label, props, child) =>
     child,
   );
 
-/** The folded sidebar's two presses: show the sidebar, and a new chat. */
-function folded(shape) {
+/** The sidebar of a wide page: the column, or the strip it narrows to,
+ *  each fading in as the side takes its width, and the side's widths in
+ *  either shape for the report of the chat's place. */
+function side() {
+  const shown = state.shown;
   return h(
     'div',
-    { key: shape, class: `ash-${shape}` },
+    {
+      key: 'side',
+      class: 'ash-side',
+      'data-shown': shown ? 'true' : 'false',
+      ontransitionend: (e) => {
+        if (e.target === e.currentTarget && e.propertyName === 'width') reportSlots();
+      },
+    },
+    h('div', { key: 'probe-shown', class: 'ash-probe', 'data-for': 'shown' }),
+    h('div', { key: 'probe-folded', class: 'ash-probe', 'data-for': 'folded' }),
+    column(false, !shown),
+    folded('strip', shown),
+  );
+}
+
+/** The folded sidebar's three presses: show the sidebar, a new chat and
+ *  the search; out of reach while the sidebar shows. */
+function folded(shape, hidden = false) {
+  const side = shape === 'strip' ? 'right' : 'below';
+  return h(
+    'div',
+    { key: shape, class: `ash-${shape}`, inert: hidden },
     control(
       'Show sidebar',
       {
@@ -355,9 +448,9 @@ function folded(shape) {
           e.stopPropagation();
           toggle();
         },
-        ...tipOn('toggle', 'Show sidebar'),
+        ...tipOn(`toggle:${shape}`, 'Show sidebar', side),
       },
-      ownGlyph('side-wide', 16),
+      ownGlyph('side-wide', 20),
     ),
     control(
       'New conversation',
@@ -366,16 +459,18 @@ function folded(shape) {
           e.stopPropagation();
           newSession(null);
         },
+        ...tipOn(`new:${shape}`, 'New conversation', side),
       },
-      glyph('edit-box-line', 16),
+      glyph('edit-box-line', 18),
     ),
-    searchControl(),
+    searchControl(shape, side),
   );
 }
 
 /** The press that opens a search of the conversations, opening the sidebar
- *  where it is folded, and closes an open one. */
-function searchControl() {
+ *  where it is folded, and closes an open one; `where` names the place of
+ *  its tip, and `side` the side of the press it shows on. */
+function searchControl(where, side = 'below') {
   return control(
     'Search conversations',
     {
@@ -389,13 +484,14 @@ function searchControl() {
         state.tip = null;
         if (state.wide && !state.shown) {
           state.shown = true;
+          glide = true;
           keep('sidebar');
         } else if (!state.wide) state.drawer = true;
         render();
       },
-      ...tipOn('search', 'Search conversations'),
+      ...tipOn(`search:${where}`, 'Search conversations', side),
     },
-    glyph('search-line', 16),
+    glyph('search-line', 18),
   );
 }
 
@@ -407,33 +503,29 @@ function closeSearch() {
 /** The search field in the sidebar's top: Escape closes the search. */
 function searchField() {
   return h(
-    'div',
-    { key: 'search', class: 'ash-actions' },
-    h(
-      'label',
-      { class: 'hs-url hs-settings-search' },
-      h('i', { class: 'hs-icon ri-search-line', style: 'font-size: 12px' }),
-      h('input', {
-        class: 'hs-in hs-urlin',
-        'aria-label': 'Search conversations',
-        placeholder: 'Search conversations',
-        mount: (el) => {
-          el.value = state.search;
-          el.focus();
-        },
-        onclick: stop,
-        oninput: (e) => {
-          state.search = e.currentTarget.value;
-          render();
-        },
-        onkeydown: (e) => {
-          if (e.key !== 'Escape') return;
-          e.stopPropagation();
-          closeSearch();
-        },
-      }),
-      h('span', { 'aria-hidden': 'true', class: 'hs-urlph hs-ph-icon' }, 'Search conversations'),
-    ),
+    'label',
+    { key: 'search', class: 'hs-url hs-settings-search ash-arrive' },
+    h('i', { class: 'hs-icon ri-search-line', style: 'font-size: 12px' }),
+    h('input', {
+      class: 'hs-in hs-urlin',
+      'aria-label': 'Search conversations',
+      placeholder: 'Search conversations',
+      mount: (el) => {
+        el.value = state.search;
+        el.focus();
+      },
+      onclick: stop,
+      oninput: (e) => {
+        state.search = e.currentTarget.value;
+        render();
+      },
+      onkeydown: (e) => {
+        if (e.key !== 'Escape') return;
+        e.stopPropagation();
+        closeSearch();
+      },
+    }),
+    h('span', { 'aria-hidden': 'true', class: 'hs-urlph hs-ph-icon' }, 'Search conversations'),
   );
 }
 
@@ -459,16 +551,16 @@ function actionRow(label, icon, onClick) {
   );
 }
 
-/** The sidebar's top: a new conversation, the search and the press that
- *  folds the sidebar at its right, and below them a new project, or the
- *  search field while a search is open. */
+/** The sidebar's top: Ash's mark and name, with the search and the press
+ *  that folds the sidebar at its right, and below them a new conversation
+ *  and a new project, or the search field while a search is open. */
 function top() {
   return [
     h(
       'div',
-      { key: 'top', class: 'ash-top' },
-      actionRow('New conversation', 'edit-box-line', () => newSession(null)),
-      searchControl(),
+      { key: 'head', class: 'ash-head' },
+      h('span', { class: 'ash-brand' }, mark(24), h('span', { class: 'hs-lockup-word' }, 'Ash')),
+      searchControl('head'),
       control(
         'Hide sidebar',
         {
@@ -476,21 +568,22 @@ function top() {
             e.stopPropagation();
             toggle();
           },
-          ...tipOn('toggle', 'Hide sidebar'),
+          ...tipOn('toggle:head', 'Hide sidebar'),
         },
-        ownGlyph('side-narrow', 16),
+        ownGlyph('side-narrow', 20),
       ),
     ),
-    state.search !== null
-      ? searchField()
-      : h(
-          'div',
-          { key: 'actions', class: 'ash-actions' },
-          actionRow('New project', 'folder-add-line', () => {
+    h(
+      'div',
+      { key: 'actions', class: 'ash-actions' },
+      actionRow('New conversation', 'edit-box-line', () => newSession(null)),
+      state.search !== null
+        ? searchField()
+        : actionRow('New project', 'folder-add-line', () => {
             state.creatingProject = true;
             render();
           }),
-        ),
+    ),
   ];
 }
 
@@ -631,7 +724,7 @@ function sessionRow(s, list, order) {
   const renaming = state.renaming === s.id;
   return h(
     'div',
-    { key: s.id, class: 'hs-session-slot' },
+    { key: s.id, class: `hs-session-slot${arrives(list)}` },
     h(
       'div',
       {
@@ -701,12 +794,15 @@ function sessionRow(s, list, order) {
   );
 }
 
+/** The class of a row of the project that just opened, which comes in. */
+const arrives = (list) => (list !== null && list === state.arriving ? ' ash-arrive' : '');
+
 /** A helper of the open family: its status, its title and the helper
  *  mark. It opens like any other conversation, because it is one. */
 function helperRow(s, list) {
   return h(
     'div',
-    { key: s.id, class: 'hs-subagent-slot' },
+    { key: s.id, class: `hs-subagent-slot${arrives(list)}` },
     h(
       'div',
       {
@@ -818,7 +914,7 @@ function selectionBar(count) {
     );
   return h(
     'div',
-    { key: 'bar', class: 'hs-selection-bar' },
+    { key: 'bar', class: 'hs-selection-bar ash-arrive' },
     h('span', { class: 'hs-selection-count' }, `${count} selected`),
     state.projects.length > 0 && action('Move to', (e) => openMenu('move', null, e)),
     action('Archive', archiveSelection),
@@ -826,7 +922,8 @@ function selectionBar(count) {
   );
 }
 
-function column(drawer) {
+/** The sidebar's column; out of reach while the side is folded. */
+function column(drawer, hidden = false) {
   const rows = rowsOf();
   rowsNow = rows;
   const order = sessionOrder(rows);
@@ -834,7 +931,7 @@ function column(drawer) {
   const { start, end, tops, total } = windowOf(rows);
   return h(
     'div',
-    { key: 'column', class: `hs-sidebar-column${drawer ? ' ash-drawer' : ''}` },
+    { key: 'column', class: `hs-sidebar-column${drawer ? ' ash-drawer' : ''}`, inert: hidden },
     top(),
     h(
       'div',
@@ -1259,13 +1356,13 @@ function menuView() {
 
 function tipView() {
   const tip = state.tip;
-  const text = tip && tipTexts.get(tip.key);
+  const text = tip && tipTexts.get(tip.key)?.text;
   if (!text) return null;
   return h(
     'div',
     {
       key: `tip:${tip.key}`,
-      class: 'hs-menu-position hs-floating-tip',
+      class: 'hs-menu-position hs-floating-tip ash-arrive',
       'data-popup': 'tip',
       mount: (el) => (el.style.visibility = 'hidden'),
     },
@@ -1277,24 +1374,25 @@ function tipView() {
   );
 }
 
-/** The box a popup stays in: the sidebar while the chat lies beside it,
- *  else the page. */
-function boundary() {
-  const column = layout() === 'side' && root.querySelector('.hs-sidebar-column');
-  return {
-    left: 0,
-    top: 0,
-    right: column ? column.getBoundingClientRect().right : innerWidth,
-    bottom: innerHeight,
-  };
-}
+/** The box a popup stays in: the whole page, chat and all, since the page
+ *  covers the chat while a popup shows. */
+const boundary = () => ({ left: 0, top: 0, right: innerWidth, bottom: innerHeight });
 
 /** Places a popup under its mark from the mark's left edge, or above it
  *  where there is more room, kept inside the boundary; a menu's list
- *  scrolls when neither side holds it. */
-function place(el, mark, menu) {
+ *  scrolls when neither side holds it. A tip at the mark's right stands
+ *  level with the mark's middle. */
+function place(el, mark, menu, side = 'below') {
   const b = boundary();
   const a = mark.getBoundingClientRect();
+  if (side === 'right') {
+    const height = el.offsetHeight;
+    const top = a.top + (a.height - height) / 2;
+    el.style.left = `${Math.min(a.right + OFFSET, b.right - PAD - el.offsetWidth)}px`;
+    el.style.top = `${Math.max(b.top + PAD, Math.min(top, b.bottom - PAD - height))}px`;
+    el.style.visibility = 'visible';
+    return;
+  }
   const surface = el.firstElementChild;
   if (menu) {
     const room = b.right - b.left - 2 * PAD;
@@ -1329,7 +1427,7 @@ function placePopups() {
   }
   const tipEl = root.querySelector('[data-popup="tip"]');
   const tipMark = tipEl && root.querySelector(`[data-tip="${CSS.escape(state.tip.key)}"]`);
-  if (tipEl && tipMark) place(tipEl, tipMark, 0);
+  if (tipEl && tipMark) place(tipEl, tipMark, 0, tipTexts.get(state.tip.key).side);
 }
 
 /** Opens the menu of one key on one target from the pressed mark, or
@@ -1369,21 +1467,38 @@ function openDialog(dialog) {
 // ---------- The chat slot ----------
 
 let reported = '';
+/** Whether the next report asks the host to glide the chat to its place,
+ *  as the sidebar folds or opens. */
+let glide = false;
+/** Whether the page covers the chat, as the host last heard. */
+let covered = false;
+
+/** Covers the chat while a popup or a drag's label shows, which may lie
+ *  over it, and uncovers it once none does. */
+function coverSlots() {
+  const over = root.querySelector('[data-popup], .hs-sidebar-drag') !== null;
+  if (over === covered) return;
+  covered = over;
+  void quietly('hearthscale/ui/cover', { covered });
+}
 
 /** Tells the host where the chat lies and which conversation it shows;
- *  the sidebar over the whole page gives the slot back. */
+ *  the sidebar over the whole page gives the slot back. While the sidebar
+ *  folds or opens, the chat's place is where the side's width settles. */
 function reportSlots() {
   const chat = root.querySelector('.ash-chat');
   const slots = [];
   if (chat) {
     const r = chat.getBoundingClientRect();
+    const settles =
+      glide && root.querySelector(`.ash-probe[data-for='${state.shown ? 'shown' : 'folded'}']`);
     slots.push({
       id: 'chat',
       kind: 'chat',
       session: state.open,
       ...(state.open === null && state.project && { project: state.project }),
       insets: {
-        left: Math.round(r.left),
+        left: Math.round(settles ? settles.getBoundingClientRect().width : r.left),
         top: Math.round(r.top),
         right: Math.round(innerWidth - r.right),
         bottom: Math.round(innerHeight - r.bottom),
@@ -1391,9 +1506,11 @@ function reportSlots() {
     });
   }
   const words = JSON.stringify(slots);
+  const animate = glide;
+  glide = false;
   if (words === reported) return;
   reported = words;
-  void quietly('hearthscale/ui/slots', { slots });
+  void quietly('hearthscale/ui/slots', { slots, ...(animate && { animate: true }) });
 }
 
 // ---------- What the person does ----------
@@ -1419,6 +1536,7 @@ function newSession(project) {
   state.drawer = false;
   if (project && !state.openProjects[project]) {
     state.openProjects = { ...state.openProjects, [project]: true };
+    state.arriving = project;
     keep('open-projects');
   }
   render();
@@ -1428,6 +1546,7 @@ function toggle() {
   state.tip = null;
   if (state.wide) {
     state.shown = !state.shown;
+    glide = true;
     keep('sidebar');
   } else state.drawer = !state.drawer;
   render();
@@ -1473,6 +1592,7 @@ function clickProject(id) {
   const onItsChat = state.open === null && state.project === id;
   if (layout() === 'drawer' || (open && onItsChat)) {
     state.openProjects = { ...state.openProjects, [id]: !open };
+    if (!open) state.arriving = id;
     keep('open-projects');
     render();
     return;
@@ -1670,6 +1790,7 @@ function track(x, y) {
       springTimer = setTimeout(() => {
         if (state.openProjects[id]) return;
         state.openProjects = { ...state.openProjects, [id]: true };
+        state.arriving = id;
         keep('open-projects');
         render();
       }, SPRING_MS);

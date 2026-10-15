@@ -38,10 +38,16 @@ another file of the package.
 ## Traps
 
 - The shell draws the chat over the page's `chat` slot, so nothing the page
-  draws shows there. Menus and tips stay inside the sidebar; a sheet opens
-  in a modal over the whole page, chat and all (`hearthscale/ui/open-modal`,
-  surface `sheet`), and closes itself; the narrow page opens the sidebar in
-  place of the chat.
+  draws shows there on its own. While a menu, a tip or a drag's label shows,
+  the page covers the slot (`hearthscale/ui/cover`), and the shell lays the
+  chat under the page until it closes; a sheet opens in a modal over the
+  whole page, chat and all (`hearthscale/ui/open-modal`, surface `sheet`),
+  and closes itself; the narrow page opens the sidebar in place of the chat.
+- The sidebar folds and opens over the kit's slow duration, and the report
+  of the chat's place that goes with it asks the shell to glide the chat
+  (`animate`), so the two move together. The report names the place the
+  chat takes once the side's width settles, and the end of the side's
+  width transition reports it again.
 - The frame has no storage of its own: the open projects, the unread marks
   and the folded sidebar live in Ash's store (`uses: store`).
 - Deleting a conversation or a project only goes through on a click inside
