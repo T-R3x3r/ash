@@ -48,6 +48,11 @@ another file of the package.
   (`animate`), so the two move together. The report names the place the
   chat takes once the side's width settles, and the end of the side's
   width transition reports it again.
+- Folded, the sidebar leaves a small bar over the chat's top left corner.
+  The chat's slot keeps a hole there (`holes`), so the bar shows above the
+  chat and takes the pointer. The hole is reported once the slide settles,
+  not while the chat glides, since a hole stands where the slot's insets
+  put it.
 - The frame has no storage of its own: the open projects, the unread marks
   and the folded sidebar live in Ash's store (`uses: store`).
 - Deleting a conversation or a project only goes through on a click inside

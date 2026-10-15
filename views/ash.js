@@ -13,9 +13,12 @@
  * tip or a drag's label shows, the page covers the slot, and the shell lays
  * the chat under the page until it closes. The page's sheets open in a
  * modal over the page (`views/sheet.js`), which the shell draws over the
- * chat as well. Folded on a wide page, the sidebar narrows to a strip beside
- * the chat, and the chat glides with it. Below the wide width it folds into
- * a bar above the chat, and opens over the whole page in place of the chat.
+ * chat as well. Folded, the sidebar leaves a small bar floating over the
+ * chat's top left corner, kept clear of the chat by a hole in the chat's
+ * slot: a new conversation, the search in a panel over the page, and the
+ * press that shows the sidebar again. On a wide page the sidebar slides
+ * aside and the chat glides with it; below the wide width it opens over
+ * the whole page in place of the chat.
  */
 import {
   App,
@@ -39,32 +42,36 @@ const PAD = 8;
 const SHEET = `
 html, body, .ash-root { height: 100%; overflow: hidden; }
 .ash { position: relative; height: 100%; }
-.ash[data-shape='bar'] { flex-direction: column; }
 .ash-chat { flex: 1; min-width: 0; min-height: 0; }
 .hs-app-surface > .hs-sidebar-column.ash-drawer { flex: 1; width: auto; border-right: none; }
-.ash-head { flex: none; display: flex; align-items: center; gap: var(--space); height: calc(var(--space) * 9); padding: 0 var(--pad-sidebar) var(--space) var(--space); }
+.ash-head { flex: none; display: flex; align-items: center; gap: var(--space); height: calc(var(--space) * 9); margin-bottom: calc(var(--space) * 3); padding: 0 var(--pad-sidebar) 0 var(--space); }
 .ash-brand { flex: 1; min-width: 0; display: flex; align-items: center; gap: calc(var(--space) * 2); color: var(--text); cursor: default; user-select: none; }
 .ash-brand > .hs-lockup-word { top: 0; font-size: var(--fs-title); }
 .ash-mark { display: block; flex: none; }
 .ash-head > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7); }
 .ash-actions { flex: none; display: flex; flex-direction: column; padding: 0 var(--pad-sidebar) calc(var(--space) * 3) 0; }
 .ash-side { position: relative; flex: none; display: flex; width: var(--w-sidebar); overflow: hidden; transition: width var(--dur-slow) var(--ease-out); }
-.ash-side[data-shown='false'] { width: calc(var(--space) * 10); }
-.ash-side::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; border-right: var(--bw) solid var(--line); pointer-events: none; transition: opacity var(--dur-slow) var(--ease-out); }
-.ash-side[data-shown='false']::after { opacity: 0; }
+.ash-side[data-shown='false'] { width: 0; }
+.ash-side::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; border-right: var(--bw) solid var(--line); pointer-events: none; }
 .ash-side > .hs-sidebar-column { flex: none; transition: opacity var(--dur-slow) var(--ease-out); }
 .ash-side[data-shown='false'] > .hs-sidebar-column { opacity: 0; transition-duration: var(--dur); }
-.ash-side > .ash-strip { position: absolute; top: 0; bottom: 0; left: 0; opacity: 0; transition: opacity var(--dur) var(--ease-out); }
-.ash-side[data-shown='false'] > .ash-strip { opacity: 1; transition-duration: var(--dur-slow); }
-.ash-probe { position: absolute; height: 0; visibility: hidden; }
-.ash-probe[data-for='shown'] { width: var(--w-sidebar); }
-.ash-probe[data-for='folded'] { width: calc(var(--space) * 10); }
+.ash-probe { position: absolute; width: var(--w-sidebar); height: 0; visibility: hidden; }
+.ash-float { position: absolute; top: var(--pad-sidebar); left: var(--pad-sidebar); display: flex; gap: var(--space); padding: var(--space); border: var(--bw) solid var(--tipline); border-radius: var(--r-card); background: var(--card); box-shadow: var(--shadow-pop); transition: opacity var(--dur) var(--ease-out); }
+.ash-float[data-shown='false'] { opacity: 0; pointer-events: none; transition-duration: 0s; }
+.ash-float > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7); border-radius: var(--r-ctl); }
+.ash-finder { position: absolute; inset: 0; display: flex; justify-content: center; align-items: flex-start; padding-top: 12vh; background: var(--scrim-dialog); backdrop-filter: var(--blur-fan); }
+.ash-finder-panel { display: flex; flex-direction: column; width: min(calc(var(--space) * 180), calc(100% - var(--space) * 8)); border: var(--bw) solid var(--tipline); border-radius: var(--r-card); background: var(--plate-menu); box-shadow: var(--gloss-edge), var(--shadow-pop); backdrop-filter: var(--blur-overlay); animation: hsPop var(--dur) var(--ease-out); }
+.ash-finder-field { display: flex; align-items: center; gap: calc(var(--space) * 3); padding: calc(var(--space) * 3.5) calc(var(--space) * 3.5) calc(var(--space) * 3.5) calc(var(--space) * 4.5); color: var(--dim); }
+.ash-finder-field > input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: inherit; font-size: var(--fs-title); color: var(--text); }
+.ash-finder-field > input::-webkit-search-cancel-button { display: none; }
+.ash-finder-esc { padding: calc(var(--space) * 1.5) calc(var(--space) * 2.5); border: var(--bw) solid var(--tipline); border-radius: var(--r-ctl); background: var(--hov); color: var(--mut); font-family: var(--font-mono); font-size: var(--fs-sm); cursor: pointer; }
+.ash-finder-esc:hover { color: var(--text); }
+.ash-finder-results { max-height: 50vh; padding: var(--space) calc(var(--space) * 2) calc(var(--space) * 2); border-top: var(--bw) solid var(--tipline); overflow-y: auto; overscroll-behavior: contain; }
+.ash-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: calc(var(--space) * 0.5); height: calc(var(--project-row-height) - 1px); padding: 0 var(--space); border: var(--bw) solid var(--tipline); box-sizing: border-box; }
+.ash-name > .hs-project-create-mark { margin-left: 0; }
 .ash-arrive { animation: hsPop var(--dur) var(--ease-out); }
 .ash .hs-session-block { padding-left: 0; }
 .ash-none { padding: calc(var(--space) * 2) calc(var(--space) * 2.5) calc(var(--space) * 2) calc(var(--space) * 7); font-size: var(--fs-sm); color: var(--mut); }
-.ash-strip { flex: none; width: calc(var(--space) * 10); padding-top: calc(var(--pad-sidebar) + var(--space)); display: flex; flex-direction: column; align-items: center; }
-.ash-bar { flex: none; height: calc(var(--space) * 9); padding: 0 calc(var(--space) * 1.5); display: flex; align-items: center; }
-:is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7); }
 .ash-glyph { display: block; flex: none; width: 1em; height: 1em; line-height: 1; }
 .ash-turning { display: grid; }
 .hs-shell :is(.hs-hovbox, .hs-hovbox-ink):active .ash-glyph { transform: var(--press); opacity: var(--press-fade); }
@@ -185,15 +192,27 @@ const glyph = (name, size) =>
 const ownGlyph = (name, size) =>
   h('i', { class: `hs-icon hs-glyph-${name} ash-glyph`, style: `font-size: ${size}px` });
 
-/** The bars of Hearthscale's mark, as `icon.svg` draws them. */
+/** The centre and the top of each bar of Hearthscale's mark, as
+ *  `icon.svg` draws them, on a base at 594 with bars 81 wide. */
+const BARS = [
+  [169, 391.5],
+  [290.5, 297],
+  [412, 230],
+  [533.5, 297],
+  [655, 391.5],
+];
+
+/** The bars of the mark as rounded boxes. */
 const markBars = () =>
-  [
-    [169, 391.5],
-    [290.5, 297],
-    [412, 230],
-    [533.5, 297],
-    [655, 391.5],
-  ].map(([x, top]) => h('path', { d: `M${x} 594V${top}` }));
+  BARS.map(([x, top]) =>
+    h('rect', { x: x - 40.5, y: top - 40.5, width: 81, height: 675 - top, rx: 40.5 }),
+  );
+
+/** The hot core inside each bar. */
+const markCores = () =>
+  BARS.map(([x, top]) =>
+    h('rect', { x: x - 14, y: top - 14, width: 28, height: 600 - top, rx: 14 }),
+  );
 
 /** Ash's mark, as `icon.svg` in the package draws it. */
 const mark = (size) =>
@@ -213,21 +232,36 @@ const mark = (size) =>
         'linearGradient',
         { id: 'ash-ember', x1: 412, y1: 190, x2: 412, y2: 634, gradientUnits: 'userSpaceOnUse' },
         h('stop', { 'stop-color': '#ff7a2e' }),
-        h('stop', { offset: 0.32, 'stop-color': '#e0401c' }),
-        h('stop', { offset: 0.68, 'stop-color': '#8a160c' }),
-        h('stop', { offset: 1, 'stop-color': '#160504' }),
+        h('stop', { offset: 0.34, 'stop-color': '#e0401c' }),
+        h('stop', { offset: 0.7, 'stop-color': '#a3200f' }),
+        h('stop', { offset: 1, 'stop-color': '#5a150b' }),
+      ),
+      h(
+        'linearGradient',
+        { id: 'ash-core', x1: 412, y1: 190, x2: 412, y2: 634, gradientUnits: 'userSpaceOnUse' },
+        h('stop', { 'stop-color': '#ffe08a' }),
+        h('stop', { offset: 0.35, 'stop-color': '#ffb04a' }),
+        h('stop', { offset: 0.75, 'stop-color': '#ff6a2a', 'stop-opacity': 0.6 }),
+        h('stop', { offset: 1, 'stop-color': '#ff6a2a', 'stop-opacity': 0 }),
       ),
       h(
         'filter',
         { id: 'ash-glow', x: '-30%', y: '-30%', width: '160%', height: '160%' },
         h('feGaussianBlur', { stdDeviation: 22 }),
       ),
+      h(
+        'filter',
+        { id: 'ash-soft', x: '-50%', y: '-20%', width: '200%', height: '140%' },
+        h('feGaussianBlur', { stdDeviation: 12 }),
+      ),
+      h('clipPath', { id: 'ash-bars' }, markBars()),
     ),
+    h('g', { fill: '#ff4a1a', opacity: 0.2, filter: 'url(#ash-glow)' }, markBars()),
+    h('g', { fill: 'url(#ash-ember)' }, markBars()),
     h(
       'g',
-      { 'stroke-width': 81, 'stroke-linecap': 'round', fill: 'none' },
-      h('g', { stroke: '#ff4a1a', opacity: 0.2, filter: 'url(#ash-glow)' }, markBars()),
-      h('g', { stroke: 'url(#ash-ember)' }, markBars()),
+      { 'clip-path': 'url(#ash-bars)' },
+      h('g', { fill: 'url(#ash-core)', opacity: 0.75, filter: 'url(#ash-soft)' }, markCores()),
     ),
   );
 
@@ -299,6 +333,9 @@ const state = {
   search: null,
   /** The project that opened since the last draw, whose rows come in. */
   arriving: null,
+  /** What the folded sidebar's search panel holds while it is open; null
+   *  while it is closed. */
+  finding: null,
   renaming: null,
   renamingProject: null,
   creatingProject: false,
@@ -348,11 +385,11 @@ function draw() {
   reportSlots();
 }
 
-/** What the page shows: the sidebar or the strip beside the chat, the bar
- *  above it, or the sidebar over the whole page. */
+/** What the page shows: the sidebar beside the chat, the sidebar folded
+ *  into the bar over the chat, or the sidebar over the whole page. */
 function layout() {
-  if (state.wide) return state.shown ? 'side' : 'strip';
-  return state.drawer ? 'drawer' : 'bar';
+  if (state.wide) return state.shown ? 'side' : 'folded';
+  return state.drawer ? 'drawer' : 'folded';
 }
 
 function page() {
@@ -361,8 +398,10 @@ function page() {
   return h(
     'div',
     { class: 'hs-app-surface ash', 'data-shape': shape, onclick: () => closeMenu() },
-    state.wide ? side() : shape === 'bar' ? folded('bar') : column(true),
+    state.wide ? side() : shape === 'drawer' && column(true),
     shape !== 'drawer' && h('main', { key: 'chat', class: 'ash-chat' }),
+    shape !== 'drawer' && folded(shape === 'folded'),
+    finder(),
     menuView(),
     tipView(),
     state.drag &&
@@ -412,9 +451,9 @@ const control = (label, props, child) =>
     child,
   );
 
-/** The sidebar of a wide page: the column, or the strip it narrows to,
- *  each fading in as the side takes its width, and the side's widths in
- *  either shape for the report of the chat's place. */
+/** The sidebar of a wide page: the column, fading as the side takes its
+ *  width or gives it up, and the width it takes, for the report of the
+ *  chat's place. */
 function side() {
   const shown = state.shown;
   return h(
@@ -427,31 +466,18 @@ function side() {
         if (e.target === e.currentTarget && e.propertyName === 'width') reportSlots();
       },
     },
-    h('div', { key: 'probe-shown', class: 'ash-probe', 'data-for': 'shown' }),
-    h('div', { key: 'probe-folded', class: 'ash-probe', 'data-for': 'folded' }),
+    h('div', { key: 'probe', class: 'ash-probe' }),
     column(false, !shown),
-    folded('strip', shown),
   );
 }
 
-/** The folded sidebar's three presses: show the sidebar, a new chat and
- *  the search; out of reach while the sidebar shows. */
-function folded(shape, hidden = false) {
-  const side = shape === 'strip' ? 'right' : 'below';
+/** The bar a folded sidebar leaves over the chat's top left corner: a new
+ *  conversation, the search and the press that shows the sidebar again;
+ *  out of reach while the sidebar shows. */
+function folded(shown) {
   return h(
     'div',
-    { key: shape, class: `ash-${shape}`, inert: hidden },
-    control(
-      'Show sidebar',
-      {
-        onclick: (e) => {
-          e.stopPropagation();
-          toggle();
-        },
-        ...tipOn(`toggle:${shape}`, 'Show sidebar', side),
-      },
-      ownGlyph('side-wide', 20),
-    ),
+    { key: 'float', class: 'ash-float', 'data-shown': shown ? 'true' : 'false', inert: !shown },
     control(
       'New conversation',
       {
@@ -459,37 +485,139 @@ function folded(shape, hidden = false) {
           e.stopPropagation();
           newSession(null);
         },
-        ...tipOn(`new:${shape}`, 'New conversation', side),
+        ...tipOn('new:float', 'New conversation'),
       },
       glyph('edit-box-line', 18),
     ),
-    searchControl(shape, side),
+    control(
+      'Search conversations',
+      {
+        onclick: (e) => {
+          e.stopPropagation();
+          state.tip = null;
+          state.finding = '';
+          render();
+        },
+        ...tipOn('search:float', 'Search conversations'),
+      },
+      glyph('search-line', 18),
+    ),
+    control(
+      'Show sidebar',
+      {
+        onclick: (e) => {
+          e.stopPropagation();
+          toggle();
+        },
+        ...tipOn('toggle:float', 'Show sidebar'),
+      },
+      ownGlyph('side-wide', 20),
+    ),
   );
 }
 
-/** The press that opens a search of the conversations, opening the sidebar
- *  where it is folded, and closes an open one; `where` names the place of
- *  its tip, and `side` the side of the press it shows on. */
-function searchControl(where, side = 'below') {
+/** The search of a folded sidebar, in a panel over the middle of the page:
+ *  the field, and the conversations whose title or first message holds its
+ *  words. A press on a conversation opens it; Escape, Esc or a press
+ *  beside the panel closes it. */
+function finder() {
+  if (state.finding === null) return null;
+  const words = state.finding.trim().toLowerCase();
+  const hits = words ? matching(words) : [];
+  const close = () => {
+    state.finding = null;
+    render();
+  };
+  return h(
+    'div',
+    { key: 'finder', class: 'ash-finder', 'data-popup': 'finder', onclick: close },
+    h(
+      'div',
+      {
+        class: 'ash-finder-panel',
+        role: 'dialog',
+        'aria-label': 'Search conversations',
+        onclick: stop,
+      },
+      h(
+        'div',
+        { class: 'ash-finder-field' },
+        glyph('search-line', 18),
+        h('input', {
+          type: 'search',
+          'aria-label': 'Search conversations',
+          placeholder: 'Search',
+          mount: (el) => el.focus(),
+          oninput: (e) => {
+            state.finding = e.currentTarget.value;
+            render();
+          },
+          onkeydown: (e) => {
+            if (e.key === 'Escape') {
+              e.stopPropagation();
+              close();
+            } else if (e.key === 'Enter' && hits[0]) find(hits[0].id);
+          },
+        }),
+        h('button', { type: 'button', class: 'ash-finder-esc', onclick: close }, 'Esc'),
+      ),
+      words &&
+        h(
+          'div',
+          { class: 'ash-finder-results' },
+          hits.length === 0
+            ? h('div', { class: 'ash-none' }, 'No conversation matches')
+            : hits.map((s) =>
+                h(
+                  'div',
+                  { key: s.id, class: 'hs-session-slot' },
+                  h(
+                    'div',
+                    {
+                      class: 'hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row',
+                      ...pressable(s.title),
+                      onclick: () => find(s.id),
+                    },
+                    h('span', { class: 'hs-session-mark' }, statusMark(statusOf(s))),
+                    h('span', { class: 'hs-session-label' }, s.title),
+                  ),
+                ),
+              ),
+        ),
+    ),
+  );
+}
+
+/** Opens a conversation the folded search found, and closes the search. */
+function find(id) {
+  state.finding = null;
+  selectOnly(id);
+  show(id);
+}
+
+/** The conversations whose title or first message holds the words. */
+const matching = (words) =>
+  state.sessions
+    .filter((s) => s.title.toLowerCase().includes(words) || s.preview.toLowerCase().includes(words))
+    .sort(byRank);
+
+/** The sidebar's press that opens a search of its list, and closes an
+ *  open one. */
+function searchControl() {
   return control(
     'Search conversations',
     {
       onclick: (e) => {
         e.stopPropagation();
-        if (state.search !== null && layout() !== 'strip' && layout() !== 'bar') {
+        if (state.search !== null) {
           closeSearch();
           return;
         }
-        state.search = state.search ?? '';
+        state.search = '';
         state.tip = null;
-        if (state.wide && !state.shown) {
-          state.shown = true;
-          glide = true;
-          keep('sidebar');
-        } else if (!state.wide) state.drawer = true;
         render();
       },
-      ...tipOn(`search:${where}`, 'Search conversations', side),
+      ...tipOn('search:head', 'Search conversations'),
     },
     glyph('search-line', 18),
   );
@@ -559,8 +687,8 @@ function top() {
     h(
       'div',
       { key: 'head', class: 'ash-head' },
-      h('span', { class: 'ash-brand' }, mark(24), h('span', { class: 'hs-lockup-word' }, 'Ash')),
-      searchControl('head'),
+      h('span', { class: 'ash-brand' }, mark(28), h('span', { class: 'hs-lockup-word' }, 'Ash')),
+      searchControl(),
       control(
         'Hide sidebar',
         {
@@ -640,14 +768,7 @@ function nameField({ key, initial, placeholder, bold, commit, cancel }) {
  *  in one list. */
 function rowsOf() {
   const words = state.search?.trim().toLowerCase();
-  if (words) {
-    const holds = (s) =>
-      s.title.toLowerCase().includes(words) || s.preview.toLowerCase().includes(words);
-    return state.sessions
-      .filter(holds)
-      .sort(byRank)
-      .map((session) => ({ kind: 'session', session, list: null }));
-  }
+  if (words) return matching(words).map((session) => ({ kind: 'session', session, list: null }));
   const rows = [];
   if (state.creatingProject) rows.push({ kind: 'new-project' });
   const push = (session, list) => {
@@ -873,13 +994,14 @@ function projectRow({ project, open, count }) {
   );
 }
 
+/** The row a new project is named in: the name in a glass field. */
 const newProjectRow = () =>
   h(
     'div',
     { key: 'new-project', class: 'hs-project-slot' },
     h(
-      'div',
-      { class: 'hs-projrow hs-project-create' },
+      'label',
+      { class: 'hs-url ash-name ash-arrive' },
       h('span', { class: 'hs-project-create-mark' }, folder(false, true, 16)),
       nameField({
         key: 'name',
@@ -1482,6 +1604,24 @@ function coverSlots() {
   void quietly('hearthscale/ui/cover', { covered });
 }
 
+/** The width the sidebar takes once its slide settles: its whole width
+ *  while it shows, none while it is folded. */
+const sideWidth = () =>
+  state.shown ? root.querySelector('.ash-probe').getBoundingClientRect().width : 0;
+
+/** The hole the folded bar keeps in the chat: the bar, and a margin round
+ *  it for its shadow. */
+function holeOf(bar) {
+  const r = bar.getBoundingClientRect();
+  const margin = 2 * parseFloat(getComputedStyle(root).getPropertyValue('--space'));
+  return {
+    left: Math.round(r.left - margin),
+    top: Math.round(r.top - margin),
+    width: Math.round(r.width + 2 * margin),
+    height: Math.round(r.height + 2 * margin),
+  };
+}
+
 /** Tells the host where the chat lies and which conversation it shows;
  *  the sidebar over the whole page gives the slot back. While the sidebar
  *  folds or opens, the chat's place is where the side's width settles. */
@@ -1490,19 +1630,20 @@ function reportSlots() {
   const slots = [];
   if (chat) {
     const r = chat.getBoundingClientRect();
-    const settles =
-      glide && root.querySelector(`.ash-probe[data-for='${state.shown ? 'shown' : 'folded'}']`);
+    const settles = glide && state.wide;
+    const bar = !glide && layout() === 'folded' && root.querySelector('.ash-float');
     slots.push({
       id: 'chat',
       kind: 'chat',
       session: state.open,
       ...(state.open === null && state.project && { project: state.project }),
       insets: {
-        left: Math.round(settles ? settles.getBoundingClientRect().width : r.left),
+        left: Math.round(settles ? sideWidth() : r.left),
         top: Math.round(r.top),
         right: Math.round(innerWidth - r.right),
         bottom: Math.round(innerHeight - r.bottom),
       },
+      ...(bar && { holes: [holeOf(bar)] }),
     });
   }
   const words = JSON.stringify(slots);
@@ -1967,12 +2108,18 @@ addEventListener('resize', () => {
   render();
 });
 
-// Escape closes the menu, else a selection of more than one row.
+// Escape closes the folded sidebar's search, else the menu, else a
+// selection of more than one row.
 addEventListener(
   'keydown',
   (e) => {
     if (e.key !== 'Escape') return;
-    if (state.menu) {
+    if (state.finding !== null) {
+      e.stopPropagation();
+      e.preventDefault();
+      state.finding = null;
+      render();
+    } else if (state.menu) {
       e.stopPropagation();
       e.preventDefault();
       closeMenu();
