@@ -5,9 +5,9 @@
  * conversations through the `sessions` extension, and keeps the open
  * projects, the unread marks and the folded sidebar in Ash's store. Its top
  * holds Ash's mark and name with the search and the press that folds it,
- * then a new conversation and a new project, or the search field while a
- * search is open; the list below scrolls with its bar over the right end of
- * the rows.
+ * then a new conversation and a new project; the list below scrolls with
+ * its bar over the right end of the rows. The search, open or folded,
+ * opens in a panel over the middle of the page.
  *
  * The shell draws the chat over the page's `chat` slot, so while a menu, a
  * tip or a drag's label shows, the page covers the slot, and the shell lays
@@ -15,8 +15,8 @@
  * modal over the page (`views/sheet.js`), which the shell draws over the
  * chat as well. Folded, the sidebar leaves a small bar floating over the
  * chat's top left corner, kept clear of the chat by a hole in the chat's
- * slot: a new conversation, the search in a panel over the page, and the
- * press that shows the sidebar again. On a wide page the sidebar slides
+ * slot: a new conversation, the search and the press that shows the
+ * sidebar again. On a wide page the sidebar slides
  * aside and the chat glides with it; below the wide width it opens over
  * the whole page in place of the chat.
  */
@@ -303,13 +303,10 @@ const state = {
   menu: null,
   /** The mark whose tip shows. */
   tip: null,
-  /** What the search field holds while a search is open; null while none
-   *  is. */
-  search: null,
   /** The project that opened since the last draw, whose rows come in. */
   arriving: null,
-  /** What the folded sidebar's search panel holds while it is open; null
-   *  while it is closed. */
+  /** What the search panel holds while it is open; null while it is
+   *  closed. */
   finding: null,
   renaming: null,
   renamingProject: null,
@@ -464,19 +461,7 @@ function folded(shown) {
       },
       glyph('edit-box-line', 18),
     ),
-    control(
-      'Search conversations',
-      {
-        onclick: (e) => {
-          e.stopPropagation();
-          state.tip = null;
-          state.finding = '';
-          render();
-        },
-        ...tipOn('search:float', 'Search conversations'),
-      },
-      glyph('search-line', 18),
-    ),
+    searchControl('float'),
     control(
       'Show sidebar',
       {
@@ -491,10 +476,10 @@ function folded(shown) {
   );
 }
 
-/** The search of a folded sidebar, in a panel over the middle of the page:
- *  the field, and the conversations whose title or first message holds its
- *  words. A press on a conversation opens it; Escape, Esc or a press
- *  beside the panel closes it. */
+/** The search, in a panel over the middle of the page: the field, and the
+ *  conversations whose title or first message holds its words. A press on
+ *  a conversation opens it; Escape, Esc or a press beside the panel closes
+ *  it. */
 function finder() {
   if (state.finding === null) return null;
   const words = state.finding.trim().toLowerCase();
@@ -563,7 +548,7 @@ function finder() {
   );
 }
 
-/** Opens a conversation the folded search found, and closes the search. */
+/** Opens a conversation the search found, and closes the search. */
 function find(id) {
   state.finding = null;
   selectOnly(id);
@@ -576,59 +561,21 @@ const matching = (words) =>
     .filter((s) => s.title.toLowerCase().includes(words) || s.preview.toLowerCase().includes(words))
     .sort(byRank);
 
-/** The sidebar's press that opens a search of its list, and closes an
- *  open one. */
-function searchControl() {
+/** The press that opens the search panel; `where` names the place of its
+ *  tip. */
+function searchControl(where) {
   return control(
     'Search conversations',
     {
       onclick: (e) => {
         e.stopPropagation();
-        if (state.search !== null) {
-          closeSearch();
-          return;
-        }
-        state.search = '';
         state.tip = null;
+        state.finding = '';
         render();
       },
-      ...tipOn('search:head', 'Search conversations'),
+      ...tipOn(`search:${where}`, 'Search conversations'),
     },
     glyph('search-line', 18),
-  );
-}
-
-function closeSearch() {
-  state.search = null;
-  render();
-}
-
-/** The search field in the sidebar's top: Escape closes the search. */
-function searchField() {
-  return h(
-    'label',
-    { key: 'search', class: 'hs-url hs-settings-search ash-arrive' },
-    h('i', { class: 'hs-icon ri-search-line', style: 'font-size: 12px' }),
-    h('input', {
-      class: 'hs-in hs-urlin',
-      'aria-label': 'Search conversations',
-      placeholder: 'Search conversations',
-      mount: (el) => {
-        el.value = state.search;
-        el.focus();
-      },
-      onclick: stop,
-      oninput: (e) => {
-        state.search = e.currentTarget.value;
-        render();
-      },
-      onkeydown: (e) => {
-        if (e.key !== 'Escape') return;
-        e.stopPropagation();
-        closeSearch();
-      },
-    }),
-    h('span', { 'aria-hidden': 'true', class: 'hs-urlph hs-ph-icon' }, 'Search conversations'),
   );
 }
 
@@ -656,14 +603,14 @@ function actionRow(label, icon, onClick) {
 
 /** The sidebar's top: Ash's mark and name, with the search and the press
  *  that folds the sidebar at its right, and below them a new conversation
- *  and a new project, or the search field while a search is open. */
+ *  and a new project. */
 function top() {
   return [
     h(
       'div',
       { key: 'head', class: 'ash-head' },
       h('span', { class: 'ash-brand' }, mark(28), h('span', { class: 'hs-lockup-word' }, 'Ash')),
-      searchControl(),
+      searchControl('head'),
       control(
         'Hide sidebar',
         {
@@ -680,12 +627,10 @@ function top() {
       'div',
       { key: 'actions', class: 'ash-actions' },
       actionRow('New conversation', 'edit-box-line', () => newSession(null)),
-      state.search !== null
-        ? searchField()
-        : actionRow('New project', 'folder-add-line', () => {
-            state.creatingProject = true;
-            render();
-          }),
+      actionRow('New project', 'folder-add-line', () => {
+        state.creatingProject = true;
+        render();
+      }),
     ),
   ];
 }
@@ -738,12 +683,8 @@ function nameField({ key, initial, placeholder, bold, commit, cancel }) {
 
 /** The rows of the list: the projects, each open one followed by its
  *  conversations, then the loose conversations, and under each
- *  conversation of the open family its helpers. While a search holds
- *  words, the conversations whose title or first message holds them,
- *  in one list. */
+ *  conversation of the open family its helpers. */
 function rowsOf() {
-  const words = state.search?.trim().toLowerCase();
-  if (words) return matching(words).map((session) => ({ kind: 'session', session, list: null }));
   const rows = [];
   if (state.creatingProject) rows.push({ kind: 'new-project' });
   const push = (session, list) => {
@@ -1082,9 +1023,6 @@ function column(drawer, hidden = false) {
               style: `height: ${total - tops[end]}px`,
             }),
           picked > 1 && selectionBar(picked),
-          rows.length === 0 &&
-            state.search?.trim() &&
-            h('div', { key: 'none', class: 'ash-none' }, 'No conversation matches'),
         ),
       ),
       h('div', { class: 'hs-overlay-thumb', 'aria-hidden': 'true' }),
@@ -1945,10 +1883,8 @@ function moveTo(x, y) {
   track(x, y);
 }
 
-/** A press that may start a drag. The one list of a search takes none:
- *  its rows stand outside their own lists. */
 function pressRow(e, id) {
-  if (e.button !== 0 || state.renaming === id || state.drag || state.search?.trim()) return;
+  if (e.button !== 0 || state.renaming === id || state.drag) return;
   press = { id, x: e.clientX, y: e.clientY };
   document.addEventListener('mousemove', onDragMove);
   document.addEventListener('mouseup', onDragUp);
