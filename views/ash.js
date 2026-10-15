@@ -1,9 +1,11 @@
 /**
  * Ash's page: its conversations and projects in a sidebar at the left, and
  * beside it the chat the shell draws in the page's `chat` slot. The sidebar
- * is drawn with the kit's `hs-*` classes and `ri-*` icons, reads and changes
- * Ash's conversations through the `sessions` extension, and keeps the open
- * projects, the unread marks and the folded sidebar in Ash's store.
+ * is drawn with the kit's `hs-*` classes and icons, reads and changes Ash's
+ * conversations through the `sessions` extension, and keeps the open
+ * projects, the unread marks and the folded sidebar in Ash's store. Its top
+ * holds a new conversation and the press that folds it, then a new project;
+ * the list below scrolls with its bar over the right end of the rows.
  *
  * Nothing the page draws shows over the slot, so the page's menus and tips
  * stay inside the sidebar; its sheets open in a modal over the page
@@ -37,8 +39,11 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 .ash[data-shape='bar'] { flex-direction: column; }
 .ash-chat { flex: 1; min-width: 0; min-height: 0; }
 .hs-app-surface > .hs-sidebar-column.ash-drawer { flex: 1; width: auto; border-right: none; }
-.ash-head { cursor: default; }
-.ash-strip { flex: none; width: calc(var(--space) * 10); padding-top: calc(var(--space) * 1.5); display: flex; flex-direction: column; align-items: center; }
+.ash-top { flex: none; display: flex; align-items: flex-start; gap: var(--space); padding-right: var(--pad-sidebar); }
+.ash-top > .hs-session-slot { flex: 1; min-width: 0; }
+.ash-actions { flex: none; display: flex; flex-direction: column; padding: 0 var(--pad-sidebar) calc(var(--space) * 3) 0; }
+.ash .hs-session-block { padding-left: 0; }
+.ash-strip { flex: none; width: calc(var(--space) * 10); padding-top: var(--pad-sidebar); display: flex; flex-direction: column; align-items: center; }
 .ash-bar { flex: none; height: calc(var(--space) * 9); padding: 0 calc(var(--space) * 1.5); display: flex; align-items: center; }
 :is(.ash-strip, .ash-bar) > .hs-sidebar-rowact { width: calc(var(--space) * 7); height: calc(var(--space) * 7.25); }
 .ash-glyph { display: block; flex: none; width: 1em; height: 1em; line-height: 1; }
@@ -48,7 +53,7 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 
 // ---------- The bridge ----------
 
-const app = new App({ name: 'Ash', version: '6.1.4' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.2.0' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
@@ -156,6 +161,11 @@ const pressable = (label) => ({
 const glyph = (name, size) =>
   h('i', { class: `ri-${name} ash-glyph`, style: `font-size: ${size}px` });
 
+/** One of Hearthscale's own marks of the kit: `side-wide` or
+ *  `side-narrow`. */
+const ownGlyph = (name, size) =>
+  h('i', { class: `hs-icon hs-glyph-${name} ash-glyph`, style: `font-size: ${size}px` });
+
 /** A project folder, open or closed, drawn in outline when it holds no
  *  conversation. */
 const folder = (open, empty, size) =>
@@ -188,22 +198,6 @@ function statusMark(status) {
   );
   return status === 'working' ? h('span', { class: 'ash-turning hs-spin' }, glyph) : glyph;
 }
-
-/** Ash's mark, as `icon.svg` in the package draws it. */
-const mark = () =>
-  h(
-    'span',
-    { class: 'hs-app-icon', style: 'width: 18px; height: 18px' },
-    h(
-      'svg',
-      { width: 18, height: 18, viewBox: '0 0 64 64' },
-      h('circle', { cx: 32, cy: 32, r: 30, fill: '#c8552b' }),
-      h('path', {
-        d: 'M32 14c-5 10-14 16-14 26a14 14 0 0 0 28 0c0-10-9-16-14-26z',
-        fill: '#ffe4c4',
-      }),
-    ),
-  );
 
 // ---------- State ----------
 
@@ -358,7 +352,7 @@ function folded(shape) {
         },
         ...tipOn('toggle', 'Show sidebar'),
       },
-      glyph('sidebar-unfold-line', 16),
+      ownGlyph('side-wide', 16),
     ),
     control(
       'New conversation',
@@ -368,44 +362,62 @@ function folded(shape) {
           newSession(null);
         },
       },
-      glyph('add-fill', 16),
+      glyph('edit-box-line', 16),
     ),
   );
 }
 
-function header() {
-  const over = state.drag?.over?.key === 'app';
+/** A row of the sidebar's top that starts something: its mark and its
+ *  name, in the place and the ink of a conversation's row. */
+function actionRow(label, icon, onClick) {
   return h(
     'div',
-    {
-      class: `hs-plugrow hs-inktext hs-app-row ash-head${over ? ' hs-boxsel' : ''}`,
-      'data-drop': 'app',
-      'data-over': over ? 'true' : undefined,
-    },
-    h('span', { class: 'hs-sidebar-mark' }, mark()),
-    'Ash',
-    control(
-      'Hide sidebar',
+    { class: 'hs-session-slot' },
+    h(
+      'div',
       {
+        class: 'hs-sessrow hs-hovbox-ink hs-inkmut hs-session-row',
+        ...pressable(label),
         onclick: (e) => {
           e.stopPropagation();
-          toggle();
+          onClick();
         },
-        ...tipOn('toggle', 'Hide sidebar'),
       },
-      glyph('sidebar-fold-line', 16),
-    ),
-    h('span', { class: 'hs-flex-spacer' }),
-    rowAction(
-      {
-        label: 'New',
-        tight: true,
-        open: state.menu?.key === 'new',
-        onClick: (e) => openMenu('new', null, e),
-      },
-      h('span', { class: 'hs-sidebar-plus' }, glyph('add-fill', 16)),
+      h('span', { class: 'hs-session-mark' }, glyph(icon, 16)),
+      h('span', { class: 'hs-session-label' }, label),
     ),
   );
+}
+
+/** The sidebar's top: a new conversation, the press that folds the
+ *  sidebar at its right, and a new project below them. */
+function top() {
+  return [
+    h(
+      'div',
+      { key: 'top', class: 'ash-top' },
+      actionRow('New conversation', 'edit-box-line', () => newSession(null)),
+      control(
+        'Hide sidebar',
+        {
+          onclick: (e) => {
+            e.stopPropagation();
+            toggle();
+          },
+          ...tipOn('toggle', 'Hide sidebar'),
+        },
+        ownGlyph('side-narrow', 16),
+      ),
+    ),
+    h(
+      'div',
+      { key: 'actions', class: 'ash-actions' },
+      actionRow('New project', 'folder-add-line', () => {
+        state.creatingProject = true;
+        render();
+      }),
+    ),
+  ];
 }
 
 function rowAction({ label, tight, open, onClick }, child) {
@@ -738,9 +750,10 @@ function column(drawer) {
   return h(
     'div',
     { key: 'column', class: `hs-sidebar-column${drawer ? ' ash-drawer' : ''}` },
+    top(),
     h(
       'div',
-      { class: 'hs-sidebar-metrics', 'aria-hidden': 'true' },
+      { key: 'metrics', class: 'hs-sidebar-metrics', 'aria-hidden': 'true' },
       h('div', { class: 'hs-session-slot' }),
       h('div', { class: 'hs-subagent-slot' }),
       h('div', { class: 'hs-project-slot' }),
@@ -748,57 +761,115 @@ function column(drawer) {
     h(
       'div',
       {
-        class: 'hs-scroll hs-sidebar-scroll',
-        onscroll: onListScroll,
-        mount: (el) => {
-          state.scrollY = 0;
-          el.addEventListener('mousedown', () => (dropped = false), true);
-          el.addEventListener('click', (e) => dropped && e.stopPropagation(), true);
-        },
+        key: 'list',
+        class: 'hs-overlay-scroll',
+        mount: (el) => overlayThumb(el.firstElementChild, el.lastElementChild),
       },
       h(
         'div',
-        { class: 'hs-app-block' },
-        header(),
+        {
+          class: 'hs-scroll hs-sidebar-scroll',
+          onscroll: onListScroll,
+          mount: (el) => {
+            state.scrollY = 0;
+            el.addEventListener('mousedown', () => (dropped = false), true);
+            el.addEventListener('click', (e) => dropped && e.stopPropagation(), true);
+          },
+        },
         h(
           'div',
-          { class: 'hs-sess', 'data-open': 'true' },
-          h(
-            'div',
-            {},
-            h(
-              'div',
-              { class: 'hs-session-block' },
-              start > 0 &&
-                h('div', {
-                  key: 'above',
-                  class: 'hs-sidebar-spacer',
-                  style: `height: ${tops[start]}px`,
-                }),
-              rows
-                .slice(start, end)
-                .map((row) =>
-                  row.kind === 'session'
-                    ? sessionRow(row.session, row.list, order)
-                    : row.kind === 'helper'
-                      ? helperRow(row.session, row.list)
-                      : row.kind === 'project'
-                        ? projectRow(row)
-                        : newProjectRow(),
-                ),
-              end < rows.length &&
-                h('div', {
-                  key: 'below',
-                  class: 'hs-sidebar-spacer',
-                  style: `height: ${total - tops[end]}px`,
-                }),
-              picked > 1 && selectionBar(picked),
+          { class: 'hs-session-block' },
+          start > 0 &&
+            h('div', {
+              key: 'above',
+              class: 'hs-sidebar-spacer',
+              style: `height: ${tops[start]}px`,
+            }),
+          rows
+            .slice(start, end)
+            .map((row) =>
+              row.kind === 'session'
+                ? sessionRow(row.session, row.list, order)
+                : row.kind === 'helper'
+                  ? helperRow(row.session, row.list)
+                  : row.kind === 'project'
+                    ? projectRow(row)
+                    : newProjectRow(),
             ),
-          ),
+          end < rows.length &&
+            h('div', {
+              key: 'below',
+              class: 'hs-sidebar-spacer',
+              style: `height: ${total - tops[end]}px`,
+            }),
+          picked > 1 && selectionBar(picked),
         ),
       ),
+      h('div', { class: 'hs-overlay-thumb', 'aria-hidden': 'true' }),
     ),
   );
+}
+
+/**
+ * Keeps the list's thumb on its scroll, as the kit's `OverlayScroll` does:
+ * as long as the share of the rows in sight, where the scroll stands, and
+ * over the right end of the rows, inside the list's right padding. The
+ * thumb's margin is its inset from the list's edges. A drag on the thumb
+ * scrolls the list, and so does a wheel over it.
+ */
+function overlayThumb(scroller, thumb) {
+  let inset = 0;
+  let least = 0;
+  let track = 0;
+  let length = 0;
+  const measure = () => {
+    const style = getComputedStyle(thumb);
+    inset = parseFloat(style.marginTop);
+    least = parseFloat(style.minHeight);
+    thumb.style.right = getComputedStyle(scroller).paddingRight;
+  };
+  const place = () => {
+    const { scrollTop, scrollHeight, clientHeight } = scroller;
+    const room = scrollHeight - clientHeight;
+    thumb.dataset.shown = room > 0 ? 'true' : 'false';
+    if (room <= 0) return;
+    track = clientHeight - 2 * inset;
+    length = Math.max(least, (track * clientHeight) / scrollHeight);
+    thumb.style.height = `${length}px`;
+    thumb.style.transform = `translateY(${((track - length) * scrollTop) / room}px)`;
+  };
+  const resized = () => {
+    measure();
+    place();
+  };
+  let drag = null;
+  thumb.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    thumb.setPointerCapture(e.pointerId);
+    drag = { pointer: e.pointerId, y: e.clientY, top: scroller.scrollTop };
+    thumb.dataset.drag = 'true';
+  });
+  thumb.addEventListener('pointermove', (e) => {
+    if (drag?.pointer !== e.pointerId || track <= length) return;
+    const room = scroller.scrollHeight - scroller.clientHeight;
+    scroller.scrollTop = drag.top + ((e.clientY - drag.y) * room) / (track - length);
+  });
+  const release = (e) => {
+    if (drag?.pointer !== e.pointerId) return;
+    drag = null;
+    delete thumb.dataset.drag;
+  };
+  thumb.addEventListener('pointerup', release);
+  thumb.addEventListener('pointercancel', release);
+  thumb.addEventListener('wheel', (e) => scroller.scrollBy({ top: e.deltaY }), { passive: true });
+  // A press on the thumb leaves the open menu open, as one on a native
+  // scrollbar does.
+  thumb.addEventListener('click', stop);
+  resized();
+  new ResizeObserver(resized).observe(scroller);
+  new MutationObserver(place).observe(scroller, { childList: true, subtree: true });
+  scroller.addEventListener('scroll', place, { passive: true });
 }
 
 /** The rows the last draw listed, which a drag reads. */
@@ -953,22 +1024,6 @@ function projectMenu(id) {
   ];
 }
 
-const newMenu = () => [
-  item({
-    icon: glyph('edit-2-fill', 14),
-    label: 'New conversation',
-    onClick: () => newSession(null),
-  }),
-  item({
-    icon: folder(false, true, 14),
-    label: 'New project',
-    onClick: () => {
-      state.creatingProject = true;
-      render();
-    },
-  }),
-];
-
 const moveMenu = () => [
   state.projects.map((p) =>
     item({ icon: folder(false, false, 14), label: p.name, onClick: () => moveSelection(p.id) }),
@@ -981,7 +1036,6 @@ const moveMenu = () => [
 const MENUS = {
   session: [sessionMenu, 170],
   project: [projectMenu, 180],
-  new: [newMenu, 170],
   move: [moveMenu, 180],
 };
 
@@ -1387,16 +1441,15 @@ function moveSelection(project) {
 }
 
 /** A drop is one change per row, filing and rank together. On a project
- *  or the header the rows go to the top of that list. Between two rows
+ *  the rows go to the top of its list. Between two rows
  *  the ranks spread evenly inside the gap; when the gap cannot hold
  *  distinct values the whole list is ranked again with whole spacing. */
 async function dropSessions(ids, target) {
   const patch = (id, project, rank) =>
     quietly('hearthscale/sessions/update', { id, project, rank });
-  if (target.kind !== 'between') {
-    const project = target.kind === 'project' ? target.id : null;
+  if (target.kind === 'project') {
     const top = Date.now();
-    for (const [k, id] of ids.entries()) await patch(id, project, top - k);
+    for (const [k, id] of ids.entries()) await patch(id, target.id, top - k);
     return;
   }
   const { project } = target;
@@ -1448,7 +1501,6 @@ function targetAt(x, y) {
   const el = document.elementFromPoint(x, y)?.closest('[data-drop]');
   if (!el) return null;
   const drop = el.dataset.drop;
-  if (drop === 'app') return { key: 'app', target: { kind: 'app' } };
   if (drop.startsWith('project:')) {
     return { key: drop, target: { kind: 'project', id: drop.slice('project:'.length) } };
   }
