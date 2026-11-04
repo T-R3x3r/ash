@@ -79,7 +79,7 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 
 // ---------- The bridge ----------
 
-const app = new App({ name: 'Ash', version: '6.2.0' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.2.2' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
@@ -1594,12 +1594,12 @@ function reportSlots() {
 // ---------- What the person does ----------
 
 /** The conversations the chat showed before the one on screen, and those a
- *  step back left ahead of it. */
+ *  step back left ahead of it; null is a new conversation. */
 const places = { back: [], forward: [] };
 
 /** Notes the conversation on screen as the chat moves on to `id`. */
 function leave(id) {
-  if (!state.open || state.open === id) return;
+  if (state.open === id) return;
   places.back.push(state.open);
   places.forward = [];
 }
@@ -1609,10 +1609,11 @@ function walk(direction) {
   const other = direction === 'back' ? 'forward' : 'back';
   while (places[direction].length) {
     const id = places[direction].pop();
-    if (!known(id)) continue;
-    if (state.open) places[other].push(state.open);
+    if (id !== null && !known(id)) continue;
+    places[other].push(state.open);
     selectOnly(id);
-    openChat(id);
+    if (id === null) openNew(null);
+    else openChat(id);
     return;
   }
 }
@@ -1637,6 +1638,10 @@ function openChat(id) {
 function newSession(project) {
   closeMenu();
   leave(null);
+  openNew(project);
+}
+
+function openNew(project) {
   state.open = null;
   state.project = project;
   state.family = null;
@@ -2076,7 +2081,10 @@ app.fallbackNotificationHandler = async (note) => {
     case 'hearthscale/ui/slot-session':
       if (params.id !== 'chat' || params.session === state.open) return;
       selectOnly(params.session);
-      show(params.session);
+      // A new conversation's first message makes it this one: no step lies
+      // between them.
+      if (state.open === null) openChat(params.session);
+      else show(params.session);
       return;
     case 'hearthscale/ui/history':
       walk(params.direction);
