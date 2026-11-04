@@ -1593,8 +1593,37 @@ function reportSlots() {
 
 // ---------- What the person does ----------
 
+/** The conversations the chat showed before the one on screen, and those a
+ *  step back left ahead of it. */
+const places = { back: [], forward: [] };
+
+/** Notes the conversation on screen as the chat moves on to `id`. */
+function leave(id) {
+  if (!state.open || state.open === id) return;
+  places.back.push(state.open);
+  places.forward = [];
+}
+
+/** Goes to the nearest conversation still there in a direction. */
+function walk(direction) {
+  const other = direction === 'back' ? 'forward' : 'back';
+  while (places[direction].length) {
+    const id = places[direction].pop();
+    if (!known(id)) continue;
+    if (state.open) places[other].push(state.open);
+    selectOnly(id);
+    openChat(id);
+    return;
+  }
+}
+
 /** Shows a conversation in the chat. */
 function show(id) {
+  leave(id);
+  openChat(id);
+}
+
+function openChat(id) {
   state.open = id;
   state.project = null;
   state.drawer = false;
@@ -1607,6 +1636,7 @@ function show(id) {
 /** Shows a new conversation, which its first message makes in `project`. */
 function newSession(project) {
   closeMenu();
+  leave(null);
   state.open = null;
   state.project = project;
   state.family = null;
@@ -2047,6 +2077,9 @@ app.fallbackNotificationHandler = async (note) => {
       if (params.id !== 'chat' || params.session === state.open) return;
       selectOnly(params.session);
       show(params.session);
+      return;
+    case 'hearthscale/ui/history':
+      walk(params.direction);
       return;
   }
 };
