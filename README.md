@@ -1,6 +1,6 @@
 # Ash
 
-Ash is an assistant you talk to in Hearthscale. Ask it a question, or give it a file or a folder to work on, and it reads, writes and runs what the task needs on your computer, then tells you what it did. It can also search the web with the Browser, make pictures, keep notes between conversations and hand parts of a big task to helpers.
+Ash is an assistant you talk to in Hearthscale. Ask it a question, or give it a file or a folder to work on, and it reads, writes and runs what the task needs on your device, then tells you what it did. It can also search the web with the Browser, make pictures, keep notes between conversations and hand parts of a big task to helpers.
 
 ## Get started
 

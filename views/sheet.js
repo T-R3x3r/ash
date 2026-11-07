@@ -12,7 +12,7 @@ import {
   PostMessageTransport,
 } from '@modelcontextprotocol/ext-apps';
 
-const app = new App({ name: 'Ash', version: '6.2.2' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.2.3' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
@@ -146,7 +146,7 @@ function sheetOf(input) {
   if (input.kind === 'delete-project') {
     return confirmSheet({
       title: `Delete ${input.name}?`,
-      body: "Its conversations stay and move to the list without a project. The project's folder stays on this computer.",
+      body: "Its conversations stay and move to the list without a project. The project's folder stays on this device.",
       action: 'Delete project',
       onConfirm: () =>
         call('hearthscale/sessions/projects/delete', { id: input.id }).catch(() => null),

@@ -79,7 +79,7 @@ html, body, .ash-root { height: 100%; overflow: hidden; }
 
 // ---------- The bridge ----------
 
-const app = new App({ name: 'Ash', version: '6.2.2' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.2.3' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
