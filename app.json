@@ -29,7 +29,7 @@
       "edit",
       "find",
       "grep",
-      "search",
+      "file_search",
       "bash",
       "bash_wait",
       "python",
