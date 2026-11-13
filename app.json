@@ -31,6 +31,7 @@
       "grep",
       "bash",
       "bash_wait",
+      "python",
       "exec",
       "exec_wait",
       "generate",
