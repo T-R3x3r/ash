@@ -9,7 +9,7 @@ Do these steps in order. The programs below need this skill's root: the root you
 
 1. **Plan.** Split the question into 2 to 5 sub-questions that do not overlap; a simple question gets 2. Show the plan with the ask tool: the question lists the sub-questions with their numbers, and the choices are "Start" and "Change". On "Change", ask what to change, change the plan and show it again.
 
-2. **Folder.** Name the folder of this research `research/<topic>-<today's date>`, with the topic in two or three words, such as `research/heat-pumps-2026-11-14`. The programs make it in the workspace.
+2. **Folder.** Name the folder of this research `research/<topic>-<today's date>`, with the topic in two or three words, such as `research/heat-pumps-2026-11-14`. It starts with research/, and the programs make it in the workspace.
 
 3. **Helpers.** For each sub-question, call spawn_agent with these arguments:
 
@@ -29,4 +29,4 @@ Do these steps in order. The programs below need this skill's root: the root you
 
    It keeps only the findings whose page a helper saved and whose quote is on that page, writes one section for each sub-question into `<the folder>/report.md` with a numbered link after each finding, and adds the list of sources.
 
-5. **Answer** in the person's language with two or three sentences that answer their question from the report, then the report as the program printed it, copied whole with every link.
+5. **Answer** in the person's language with two or three sentences that answer their question from the report, then the report as the program printed it, copied whole with every link. Where a section says that no saved page answers it, say so; do not search further yourself.
