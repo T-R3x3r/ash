@@ -96,7 +96,7 @@
     ledger.push({ id, url: bare(page.url), title: page.title || page.url, file });
     for (const block of page.markdown.split(/\n\s*\n/)) {
       const lines = block.split('\n').filter((l) => l.trim());
-      if (lines.filter((l) => /^\s*([-*+]|\d+\.)\s*\[/.test(l)).length * 2 > lines.length) continue;
+      if (lines.filter((l) => /^\s*([-*+]|\d+\.)\s*\[/.test(l)).length * 2 >= lines.length) continue;
       const text = plain(block).replace(/\s+/g, ' ').trim();
       if (text.length < 60 || text.length < block.replace(/\s+/g, ' ').trim().length * 0.5) continue;
       blocks.push({ id, url: bare(page.url), title: page.title, text });
