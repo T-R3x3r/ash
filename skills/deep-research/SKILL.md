@@ -9,15 +9,15 @@ Do these steps in order. The programs below need this skill's root: the root you
 
 1. **Plan.** Split the question into 2 to 5 sub-questions that do not overlap; a simple question gets 2. Show the plan with the ask tool: the question lists the sub-questions with their numbers, and the choices are "Start" and "Change". On "Change", ask what to change, change the plan and show it again.
 
-2. **Folder.** Name the folder of this research `research/<topic>-<today's date>`, with the topic in two or three words, such as `research/heat-pumps-2026-11-14`.
+2. **Folder.** Name the folder of this research `research/<topic>-<today's date>`, with the topic in two or three words, such as `research/heat-pumps-2026-11-14`. The programs make it in the workspace.
 
-3. **Helpers.** For each sub-question, start a helper with spawn_agent, agent "researcher", and this task:
+3. **Helpers.** For each sub-question, call spawn_agent with these arguments:
 
-   ```
-   Sub-question <number>: <the sub-question>
-   Folder: <the folder>
-   Sources: <the addresses the person named, or "the web">
-   Language: <the person's language>
+   ```json
+   { "agent": "researcher", "title": "<two or three words>", "task": "Sub-question <number>: <the sub-question>
+Folder: <the folder>
+Sources: <the addresses the person named, or the web>
+Language: <the language the person wrote in>" }
    ```
 
    Start two helpers, wait for them with wait_agents and timeout_s 1800, then start the next two.
