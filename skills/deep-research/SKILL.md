@@ -39,4 +39,4 @@ Do these steps in order. The programs below need this skill's root: the root you
 
    It joins the sections into `<the folder>/report.md`, turns each source number into a numbered link, removes every link that no helper saved, and adds the list of sources.
 
-7. **Answer** with the report as the program printed it.
+7. **Answer** by copying the report the program printed, from its title to its list of sources, word for word with every link. Add nothing before or after it.

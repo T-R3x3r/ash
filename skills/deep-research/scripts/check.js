@@ -1,5 +1,4 @@
 (async (dir) => {
-  const MOST_HELPERS = 8;
   const bare = (url) => String(url ?? '').trim().replace(/#.*$/, '').replace(/\/$/, '');
   const flat = (s) =>
     String(s ?? '')
@@ -24,26 +23,26 @@
       offset = Number(more[2]);
     }
   };
-  const maybe = async (path) => {
-    try {
-      return await readAll(path);
-    } catch {
-      return null;
-    }
-  };
+  const names = (await tools.read({ root: 'workspace', path: dir })).text.split('\n');
+  const numbered = (kind) =>
+    names
+      .map((name) => new RegExp(`^${kind}-(\\d+)\\.json(l?)$`).exec(name))
+      .filter(Boolean)
+      .map((m) => ({ n: Number(m[1]), path: `${dir}/${m[0]}` }))
+      .sort((a, b) => a.n - b.n);
 
   const ledger = new Map();
   const found = [];
   const problems = [];
-  for (let n = 1; n <= MOST_HELPERS; n += 1) {
-    const listed = await maybe(`${dir}/ledger-${n}.jsonl`);
-    for (const line of (listed ?? '').split('\n')) {
+  for (const { path } of numbered('ledger')) {
+    for (const line of (await readAll(path)).split('\n')) {
       if (!line.trim()) continue;
       const entry = JSON.parse(line);
       if (!ledger.has(bare(entry.url))) ledger.set(bare(entry.url), entry);
     }
-    const raw = await maybe(`${dir}/findings-${n}.json`);
-    if (raw === null) continue;
+  }
+  for (const { n, path } of numbered('findings')) {
+    const raw = await readAll(path);
     let list;
     try {
       const parsed = JSON.parse(raw.replace(/^\s*```\w*\s*|\s*```\s*$/g, ''));

@@ -1,5 +1,4 @@
 (async ({ dir, title }) => {
-  const MOST_SECTIONS = 8;
   const bare = (url) => String(url ?? '').trim().replace(/#.*$/, '').replace(/\/$/, '');
   const readAll = async (path) => {
     const lines = [];
@@ -13,18 +12,18 @@
       offset = Number(more[2]);
     }
   };
-  const maybe = async (path) => {
-    try {
-      return await readAll(path);
-    } catch {
-      return null;
-    }
-  };
+  const names = (await tools.read({ root: 'workspace', path: dir })).text.split('\n');
+  const numbered = (kind, ext) =>
+    names
+      .map((name) => new RegExp(`^${kind}-(\\d+)\\.${ext}$`).exec(name))
+      .filter(Boolean)
+      .map((m) => ({ n: Number(m[1]), path: `${dir}/${m[0]}` }))
+      .sort((a, b) => a.n - b.n);
 
   const byId = new Map();
   const byUrl = new Map();
-  for (let n = 1; n <= MOST_SECTIONS; n += 1) {
-    for (const line of ((await maybe(`${dir}/ledger-${n}.jsonl`)) ?? '').split('\n')) {
+  for (const { path } of numbered('ledger', 'jsonl')) {
+    for (const line of (await readAll(path)).split('\n')) {
       if (!line.trim()) continue;
       const entry = JSON.parse(line);
       byId.set(entry.id, entry);
@@ -43,10 +42,8 @@
   const link = (entry) => `[${number(entry)}](${entry.url})`;
 
   const sections = [];
-  for (let n = 1; n <= MOST_SECTIONS; n += 1) {
-    const text = await maybe(`${dir}/section-${n}.md`);
-    if (text === null) continue;
-    const linked = text
+  for (const { path } of numbered('section', 'md')) {
+    const linked = (await readAll(path))
       .replace(/\[([^\]]*)\]\((https?:\/\/[^)\s]+)\)/g, (all, label, url) => {
         const entry = byUrl.get(bare(url));
         if (entry) return `${label} ${link(entry)}`;
