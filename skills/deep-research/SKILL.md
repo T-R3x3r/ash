@@ -19,26 +19,14 @@ Do these steps in order. The programs below need this skill's root: the root you
 
    Start two helpers, wait for them with wait_agents and timeout_s 1800, then start the next two.
 
-4. **Check.** When every helper has answered, run this program with exec and yield_s 30:
-
-   ```js
-   const s = await tools.read({ root: "<this skill's root>", path: "scripts/check.js" });
-   const check = eval(s.text.replace(/^\d+\|/gm, ""));
-   text(await check("<the folder>"));
-   ```
-
-   It keeps only the findings whose page a helper saved and whose quote is on that page, and lists them by sub-question with a source number such as [2-1].
-
-5. **Write** the report one section at a time. For each sub-question, write the file `<the folder>/section-<number>.md` with write, root workspace. Start it with `## ` and a short heading, then write a few sentences in the person's language with the kept findings of that sub-question only. After each fact, put its source number in square brackets, such as [2-1]. Where findings disagree or something was not found, say so.
-
-6. **Sources.** Run this program with exec and yield_s 30, with a title for the report:
+4. **Report.** When every helper has answered, run this program with exec and yield_s 30, with a title and the sub-questions of the plan in their order:
 
    ```js
    const s = await tools.read({ root: "<this skill's root>", path: "scripts/report.js" });
    const report = eval(s.text.replace(/^\d+\|/gm, ""));
-   text(await report({ dir: "<the folder>", title: "<the title>" }));
+   text(await report({ dir: "<the folder>", title: "<the title>", questions: ["<sub-question 1>", "<sub-question 2>"] }));
    ```
 
-   It joins the sections into `<the folder>/report.md`, turns each source number into a numbered link, removes every link that no helper saved, and adds the list of sources.
+   It keeps only the findings whose page a helper saved and whose quote is on that page, writes one section for each sub-question into `<the folder>/report.md` with a numbered link after each finding, and adds the list of sources.
 
-7. **Answer** by copying the report the program printed, from its title to its list of sources, word for word with every link. Add nothing before or after it.
+5. **Answer** in the person's language with two or three sentences that answer their question from the report, then the report as the program printed it, copied whole with every link.

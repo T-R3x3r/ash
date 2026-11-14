@@ -1,4 +1,5 @@
-(async ({ dir, n, question, queries = [], sources = [] }) => {
+(async ({ dir: folder, n, question, queries = [], sources = [] }) => {
+  const dir = String(folder).replace(/^[\\/]*workspace[\\/]+/, '').replace(/[\\/]+$/, '');
   const MOST_PAGES = 8;
   const MOST_PASSAGES = 8;
   const PER_PAGE = 3;
