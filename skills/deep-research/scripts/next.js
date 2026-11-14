@@ -167,8 +167,8 @@ async function report(plan) {
       found += 1;
       const source = /(\d+-\d+)/.exec(String(f.source ?? ''))?.[1];
       const quote = flat(f.quote).replace(/^["']|["']$/g, '').replace(/\.{3}|…/g, '').trim();
-      const passage = passages.find((p) => p.id === source);
-      if (!passage || quote.length < 12 || !flat(passage.text).includes(quote)) continue;
+      const passage = passages.find((p) => p.id === source && flat(p.text).includes(quote));
+      if (!passage || quote.length < 12) continue;
       kept.push({ n: Number(n), url: passage.url, title: passage.title, claim: linkless(f.claim) });
     }
   }
