@@ -22,7 +22,7 @@ Do these steps in order. The programs below need this skill's root: the root you
 
    Start two helpers, wait for them with wait_agents and timeout_s 1800, then start the next two.
 
-4. **Check.** When every helper has answered, run this program with exec:
+4. **Check.** When every helper has answered, run this program with exec and yield_s 30:
 
    ```js
    const s = await tools.read({ root: "<this skill's root>", path: "scripts/check.js" });
@@ -33,7 +33,7 @@ Do these steps in order. The programs below need this skill's root: the root you
 
 5. **Write** the report one section at a time. For each sub-question, write the file `<the folder>/section-<number>.md` with write, root workspace. Start it with `## ` and a short heading, then write a few sentences in the person's language with the kept findings of that sub-question only. After each fact, put its source number in square brackets, such as [2-1]. Where findings disagree or something was not found, say so.
 
-6. **Sources.** Run this program with exec, with a title for the report:
+6. **Sources.** Run this program with exec and yield_s 30, with a title for the report:
 
    ```js
    const s = await tools.read({ root: "<this skill's root>", path: "scripts/report.js" });
