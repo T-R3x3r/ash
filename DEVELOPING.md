@@ -60,12 +60,11 @@ another file of the package.
 - Deleting a conversation or a project only goes through on a click inside
   the sheet, so the call starts in the handler of the press that confirms it.
   The page hears the deletion and moves its chat when it showed it.
-- A skill's `scripts/*.js` file is one JavaScript expression, an async
-  function. The agent reads it with `read` and runs it with `exec` through
-  `eval`, after it strips the line numbers `read` adds, so a line of a
-  script stays under the 2,000 characters a line of `read` keeps. The
-  scripts call tools only, and the `researcher` helpers and Ash share the
-  files they write through the workspace.
+- A skill's `scripts/*.js` file is an `exec` program: it reads its input
+  as `args` and answers with `text()`. The agent runs it with `exec` by
+  `file`, the skill's root and the script's path, so the model writes only
+  JSON. The scripts call tools only, and the `researcher` helpers and Ash
+  share the files they write through the workspace.
 - A project's Open folder shows its folder in the system's file manager
   (`openai/files/open`, `uses: files.open`); a view may open only a folder
   of its own app.

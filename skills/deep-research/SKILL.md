@@ -19,12 +19,10 @@ Do these steps in order. The programs below need this skill's root: the root you
 
    Start two helpers, wait for them with wait_agents and timeout_s 1800, then start the next two.
 
-4. **Report.** When every helper has answered, run this program with exec and yield_s 30, with a title and the sub-questions of the plan in their order:
+4. **Report.** When every helper has answered, call exec with these arguments, with a title and the sub-questions of the plan in their order:
 
-   ```js
-   const s = await tools.read({ root: "<this skill's root>", path: "scripts/report.js" });
-   const report = eval(s.text.replace(/^\d+\|/gm, ""));
-   text(await report({ dir: "<the folder>", title: "<the title>", questions: ["<sub-question 1>", "<sub-question 2>"] }));
+   ```json
+   { "file": { "root": "<this skill's root>", "path": "scripts/report.js" }, "args": { "dir": "<the folder>", "title": "<the title>", "questions": ["<sub-question 1>", "<sub-question 2>"] }, "yield_s": 30 }
    ```
 
    It keeps only the findings whose page a helper saved and whose quote is on that page, writes one section for each sub-question into `<the folder>/report.md` with a numbered link after each finding, and adds the list of sources.
