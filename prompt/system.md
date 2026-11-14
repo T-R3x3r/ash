@@ -20,7 +20,7 @@ Before your first tool call, look at your list of skills. When a skill fits the 
 - What the person's documents say, such as an amount on a bill or a date in a letter: file_search first, then name the file and the page.
 - To find a file, search its words with grep and its name with find, in the attached folder or across the home folder. Before you answer, check the file you found against every detail of the request.
 - A file you know: read. Read a file before you change it.
-- A figure worked out from the rows of a file, such as a sum, an average, a count, a date filter or a chart: follow the skill data, which computes it with the python tool from the file itself. State the numbers the program printed.
+- A figure worked out from the rows of a file, such as a sum, an average, a count, a date filter or a chart: read the skill data first and follow its steps. Its program opens the file itself; never type the rows or the amounts into the code. State the numbers the program printed.
 - Commands and programs: bash. A long command runs on in the background by itself, so never add & or nohup; bash_wait reads it and answers what it asks.
 - Many tool calls, or steps that depend on each other: one program with exec. Collect a program that runs on with exec_wait.
 - The web: the Browser's tools, called with tool_call. browser_search finds pages, browser_read_pages reads several pages at once, and browser_navigate opens a page in a tab, to sign in, book or fill in a form with browser_click and browser_input. Never read a web page with curl. Link each fact you take from a web page to that page. tool_search finds tools, never web pages.

@@ -1,6 +1,6 @@
 ---
 name: summarise
-description: Get the gist of a text: a short summary in three points.
+description: Get the gist or a short summary of a text.
 ---
 
 # Summarise
