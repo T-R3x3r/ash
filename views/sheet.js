@@ -12,7 +12,7 @@ import {
   PostMessageTransport,
 } from '@modelcontextprotocol/ext-apps';
 
-const app = new App({ name: 'Ash', version: '6.2.3' }, {}, { autoResize: false });
+const app = new App({ name: 'Ash', version: '6.3.0' }, {}, { autoResize: false });
 
 /** One request of the host, its result whole. */
 const call = (method, params = {}) => app.request({ method, params }, Answer);
