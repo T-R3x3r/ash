@@ -1,5 +1,11 @@
 const { message, sources = [], language, topic, questions } = args ?? {};
 
+if (!('browser_search' in tools && 'browser_read_pages' in tools)) {
+  throw new Error(
+    'Deep research searches and reads the web with the Browser app, which this conversation cannot use. Tell the person to install, update or switch on the Browser, and do not research without it.',
+  );
+}
+
 const fail = (words) => {
   throw new Error(`${words} Fix it and call plan.js again.`);
 };
@@ -59,7 +65,7 @@ let dir = `research/${slug}-${day}`;
 for (let i = 2; await exists(dir); i += 1) dir = `research/${slug}-${day}-${i}`;
 
 const saved = { topic: said(topic), language: said(language), sources: sites, questions: plan };
-await store(`research:${dir}`, { ...saved, helpers: [], findings: {}, passages: {} });
+await store(`research:${dir}`, { ...saved, helpers: [], findings: {}, passages: {}, failed: {} });
 
 const card = { question: `${saved.topic}: ${plan.map((q, i) => `${i + 1}. ${q.question}`).join(' ')}`, choices: ['Start', 'Change'] };
 const next = { file: { root: "<this skill's root>", path: 'scripts/next.js' }, args: { dir, step: 1 }, yield_s: 30 };

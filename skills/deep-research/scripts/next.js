@@ -18,12 +18,11 @@ const words = (s) =>
     .toLowerCase()
     .split(/[\s.,;:!?()[\]{}"'“”„‘’«»/\\|<>=+*#&%$§@^~`_–—-]+/)
     .filter((w) => w.length >= 3);
-const plain = (s) => s.replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1');
+const plain = (s) => String(s ?? '').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1');
 const origin = (url) => (/^(https?:\/\/[^/?#]+)/i.exec(url) ?? [])[1]?.toLowerCase();
 const bare = (url) => String(url ?? '').trim().replace(/#.*$/, '').replace(/\/$/, '');
 const flat = (s) =>
-  String(s ?? '')
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+  plain(s)
     .toLowerCase()
     .replace(/[‘’‚`´]/g, "'")
     .replace(/[“”„«»]/g, '"')
@@ -32,8 +31,7 @@ const flat = (s) =>
     .replace(/\s+/g, ' ')
     .trim();
 const linkless = (s) =>
-  String(s ?? '')
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+  plain(s)
     .replace(/\s*\(?https?:\/\/[^\s)]+\)?/g, '')
     .replace(/\s+/g, ' ')
     .trim();
@@ -63,7 +61,8 @@ const readPages = async (urls) => {
 };
 
 /** Reads the pages of sub-question n, saves each one in the folder and
- *  answers the passages that best match the sub-question. */
+ *  answers the passages that best match the sub-question. A failed search
+ *  is kept as the reason its section stays empty. */
 async function gather(plan, n) {
   const question = plan.questions[n - 1].question;
   const wanted = [...new Set(words(question))];
@@ -76,7 +75,6 @@ async function gather(plan, n) {
       return wanted.reduce((sum, w) => sum + (own.has(w) ? Math.max(weight.get(w), 0.05) : 0), 0);
     };
   };
-  const notes = [];
   let pages = [];
   let urls = [];
   if (plan.sources.length) {
@@ -100,7 +98,7 @@ async function gather(plan, n) {
       const r = await tools.browser_search({ query: question });
       urls = [...new Set(r.structured.results.map((x) => bare(x.url)))].slice(0, MOST_PAGES);
     } catch (e) {
-      notes.push(`The search failed: ${String(e?.message ?? e)}`);
+      plan.failed[n] = linkless(`The search failed: ${String(e?.message ?? e)}`);
     }
   }
   pages.push(...(await readPages(urls)));
@@ -168,8 +166,9 @@ async function report(plan) {
       const source = /(\d+-\d+)/.exec(String(f.source ?? ''))?.[1];
       const quote = flat(f.quote).replace(/^["']|["']$/g, '').replace(/\.{3}|…/g, '').trim();
       const passage = passages.find((p) => p.id === source && flat(p.text).includes(quote));
-      if (!passage || quote.length < 12) continue;
-      kept.push({ n: Number(n), url: passage.url, title: passage.title, claim: linkless(f.claim) });
+      const claim = linkless(f.claim);
+      if (!passage || quote.length < 12 || !claim) continue;
+      kept.push({ n: Number(n), url: passage.url, title: passage.title, claim });
     }
   }
   const cited = [];
@@ -183,7 +182,7 @@ async function report(plan) {
     const mine = kept.filter((k) => k.n === i + 1);
     const lines = mine.length
       ? mine.map((k) => `- ${k.claim} [${number(k)}](${k.url})`)
-      : ['- No saved page answers this.'];
+      : [`- ${plan.failed[i + 1] ?? 'No saved page answers this.'}`];
     return `## ${linkless(q.question)}\n\n${lines.join('\n')}`;
   });
   const sources = cited.map((c, i) => `${i + 1}. [${linkless(c.title) || c.url}](${c.url})`);
