@@ -10,7 +10,7 @@ Do these steps in order. This skill has two programs that are already written, s
 1. **Plan.** Split the question into 2 to 5 sub-questions that do not overlap; a simple question gets 2. Give each a title of two or three words. Then call exec with these fields, and change only what is in angle brackets:
 
    ```json
-   { "file": { "root": "<this skill's root>", "path": "scripts/plan.js" }, "args": { "topic": "<the topic in two or three words>", "request": "<the person's request, copied word for word>", "language": "<the language the request is written in>", "sources": ["<each web address or site the person named>"], "questions": [{ "title": "<two or three words>", "question": "<sub-question 1>" }, { "title": "<two or three words>", "question": "<sub-question 2>" }] }, "yield_s": 30 }
+   { "file": { "root": "<this skill's root>", "path": "scripts/plan.js" }, "args": { "message": "<the person's message, copied whole with every web address in it>", "sources": ["<each web address or site the message names>"], "language": "<the language the message is written in>", "topic": "<the topic in two or three words>", "questions": [{ "title": "<two or three words>", "question": "<sub-question 1>" }, { "title": "<two or three words>", "question": "<sub-question 2>" }] }, "yield_s": 30 }
    ```
 
    Write "sources": [] when the person named no site. The program saves the plan and prints the next calls.

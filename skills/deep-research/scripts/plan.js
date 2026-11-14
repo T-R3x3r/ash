@@ -1,12 +1,12 @@
-const { topic, request, sources = [], language, questions } = args ?? {};
+const { message, sources = [], language, topic, questions } = args ?? {};
 
 const fail = (words) => {
   throw new Error(`${words} Fix it and call plan.js again.`);
 };
 const said = (value) => (typeof value === 'string' ? value.trim() : '');
 if (!said(topic)) fail('"topic" names the topic in two or three words.');
-if (!said(request)) fail('"request" holds the person\'s request, copied word for word.');
-if (!said(language)) fail('"language" names the language of the request, such as English.');
+if (!said(message)) fail('"message" holds the person\'s message, copied whole with every web address in it.');
+if (!said(language)) fail('"language" names the language of the message, such as English.');
 if (!Array.isArray(questions) || questions.length < 2 || questions.length > 5) {
   fail('"questions" lists 2 to 5 sub-questions.');
 }
@@ -25,7 +25,7 @@ const slug = said(topic)
   .replace(/-+$/, '');
 if (!slug) fail('"topic" holds no letters.');
 
-const asked = said(request);
+const asked = said(message);
 const words = new Set(asked.toLowerCase().split(/[^\p{L}\p{N}.:-]+/u));
 const hostOf = (address) =>
   (/^(?:[a-z][a-z0-9+.-]*:\/\/)?([^/?#\s]+)/i.exec(address)?.[1] ?? '').toLowerCase().replace(/^www\./, '');
@@ -39,7 +39,9 @@ const named = (address) => {
     .some((label) => label.length >= 4 && words.has(label));
 };
 const typed = [...asked.matchAll(/https?:\/\/[^\s<>()"'[\]]+/gi)].map((m) => m[0].replace(/[.,;:!?]+$/, ''));
-const given = (Array.isArray(sources) ? sources : []).map(said).filter((s) => s && named(s));
+const given = (Array.isArray(sources) ? sources : [])
+  .map(said)
+  .filter((s) => /^\S+[.:]\S+$/.test(s) && (!typed.length || named(s)));
 const sites = [
   ...new Set([...typed, ...given].map((s) => (/^https?:\/\//i.test(s) ? s : `https://${s}`).replace(/\/+$/, ''))),
 ];
