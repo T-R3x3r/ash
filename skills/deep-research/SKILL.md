@@ -23,7 +23,8 @@ Do these steps in order. The programs below need this skill's root: the root you
 
    ```js
    const s = await tools.read({ root: "<this skill's root>", path: "scripts/check.js" });
-   text(await eval(s.text.replace(/^\d+\|/gm, ""))("<the folder>"));
+   const check = eval(s.text.replace(/^\d+\|/gm, ""));
+   text(await check("<the folder>"));
    ```
 
    It keeps only the findings whose page a helper saved and whose quote is on that page, and lists them by sub-question with a source number such as [2-1].
@@ -34,7 +35,8 @@ Do these steps in order. The programs below need this skill's root: the root you
 
    ```js
    const s = await tools.read({ root: "<this skill's root>", path: "scripts/report.js" });
-   text(await eval(s.text.replace(/^\d+\|/gm, ""))({ dir: "<the folder>", title: "<the title>" }));
+   const report = eval(s.text.replace(/^\d+\|/gm, ""));
+   text(await report({ dir: "<the folder>", title: "<the title>" }));
    ```
 
    It joins the sections into `<the folder>/report.md`, turns each source number into a numbered link, removes every link that no helper saved, and adds the list of sources.

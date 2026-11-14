@@ -85,6 +85,7 @@
       ].join('\n');
     }),
     dropped.length ? `Dropped:\n${dropped.map((d) => `- ${d}`).join('\n')}` : '',
+    `Next: for each sub-question, write ${dir}/section-<number>.md with write, root workspace, from its kept findings only, with their source numbers such as [${kept[0]?.source ?? '1-1'}]; then run scripts/report.js.`,
   ]
     .filter(Boolean)
     .join('\n\n');

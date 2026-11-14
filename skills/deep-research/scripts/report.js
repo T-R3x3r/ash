@@ -77,7 +77,7 @@
   await tools.write({ root: 'workspace', path: `${dir}/report.md`, content: `${report}\n` });
   return [
     removed.length ? `Removed ${removed.length} links that no helper saved.` : '',
-    `The report, saved as ${dir}/report.md:`,
+    `The report, saved as ${dir}/report.md. Next: answer with it, copied whole from its title to its sources, with every link:`,
     report,
   ]
     .filter(Boolean)

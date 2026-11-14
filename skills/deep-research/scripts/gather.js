@@ -131,5 +131,6 @@
     ...notes,
     best.length ? 'The passages that best match the sub-question:' : 'No passage matches the sub-question.',
     ...best.map((b) => `[${b.id}] ${b.title ? `${b.title} — ` : ''}${b.url}\n${clipped(b.text)}`),
+    `Next: write your findings to ${dir}/findings-${n}.json with write, root workspace, then answer in one line.`,
   ].join('\n\n');
 })

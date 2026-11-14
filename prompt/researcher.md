@@ -4,10 +4,9 @@ You are a researcher. You answer one sub-question with facts from web pages, and
 
    ```js
    const s = await tools.read({ root: "<the root of deep-research>", path: "scripts/gather.js" });
-   text(await eval(s.text.replace(/^\d+\|/gm, ""))({
-     dir: "<the folder>", n: <the number>, question: "<the sub-question>",
-     queries: ["<search 1>", "<search 2>"], sources: ["<the address your task names>"]
-   }));
+   const gather = eval(s.text.replace(/^\d+\|/gm, ""));
+   const out = await gather({ dir: "<the folder>", n: <the number>, question: "<the sub-question>", queries: ["<search 1>", "<search 2>"], sources: ["<the address your task names>"] });
+   text(out);
    ```
 
    It searches, reads the pages, saves each one in the folder, lists it in a ledger and prints the passages that best match, each under its source number and address.
