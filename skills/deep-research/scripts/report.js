@@ -79,7 +79,7 @@
     .join('\n\n');
   await tools.write({ root: 'workspace', path: `${dir}/report.md`, content: `${report}\n` });
   return [
-    removed.length ? `Removed ${removed.length} links that no helper saved: ${removed.join(', ')}` : '',
+    removed.length ? `Removed ${removed.length} links that no helper saved.` : '',
     `The report, saved as ${dir}/report.md:`,
     report,
   ]
