@@ -54,7 +54,7 @@
     ],
     "budget": {
       "tokens": 2000000,
-      "rounds": 80
+      "rounds": 120
     },
     "projects": true
   },
@@ -82,7 +82,11 @@
       ],
       "skills": [
         "skills"
-      ]
+      ],
+      "budget": {
+        "tokens": 300000,
+        "rounds": 12
+      }
     }
   },
   "recommends": [
