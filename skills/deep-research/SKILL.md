@@ -1,6 +1,6 @@
 ---
 name: deep-research
-description: Use it when the person asks to research or compare something in depth, on the web or on sites they name.
+description: Use it when the person asks you to research or look into something, on the web or on a site they name.
 ---
 
 # Deep research
