@@ -9,7 +9,7 @@ const MOST_PASSAGES = 8;
 const PER_PAGE = 3;
 const PASSAGE_CHARS = 700;
 const LINE_CHARS = 900;
-const WORK_MS = 24000;
+const WORK_MS = 8000;
 const began = Date.now();
 const left = () => WORK_MS - (Date.now() - began);
 
@@ -213,7 +213,7 @@ async function work(plan, all) {
     if (all.every((n) => n in plan.findings)) return;
     const started = new Set(plan.helpers.map((h) => h.n));
     const next = all.find((n) => !started.has(n) && !(n in plan.findings));
-    if (next && working().length < AT_ONCE && left() > 12000) {
+    if (next && working().length < AT_ONCE && left() > 4000) {
       const passages = await gather(plan, next);
       plan.passages[next] = passages;
       if (!passages.length) {
@@ -232,8 +232,8 @@ async function work(plan, all) {
       continue;
     }
     const still = working();
-    if (!still.length || left() < 5000) return;
-    await tools.wait_agents({ ids: still.map((h) => h.id), timeout_s: Math.min(20, Math.floor(left() / 1000) - 3) });
+    if (!still.length || left() < 2000) return;
+    await tools.wait_agents({ ids: still.map((h) => h.id), timeout_s: Math.max(1, Math.floor(left() / 1000) - 1) });
   }
 }
 

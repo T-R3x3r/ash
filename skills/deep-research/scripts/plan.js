@@ -59,7 +59,7 @@ for (let i = 2; await exists(dir); i += 1) dir = `research/${slug}-${day}-${i}`;
 const saved = { topic: said(topic), language: said(language), sources: sites, questions: plan };
 await store(`research:${dir}`, { ...saved, helpers: [], findings: {}, passages: {} });
 
-const card = { question: [saved.topic, ...plan.map((q, i) => `${i + 1}. ${q.question}`)].join('\n'), choices: ['Start', 'Change'] };
+const card = { question: `${saved.topic}: ${plan.map((q, i) => `${i + 1}. ${q.question}`).join(' ')}`, choices: ['Start', 'Change'] };
 const next = { file: { root: "<this skill's root>", path: 'scripts/next.js' }, args: { dir, step: 1 }, yield_s: 30 };
 text(
   [

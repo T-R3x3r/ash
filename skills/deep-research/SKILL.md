@@ -5,9 +5,9 @@ description: Research a question on the web or on named sites, with a linked sou
 
 # Deep research
 
-Do these steps in order. This skill has two programs that are already written, scripts/plan.js and scripts/next.js. exec runs each one by its file, so you write no code: you only give the file and the args below. The root of the file is this skill's root, the root you read this file from.
+Do these steps in order. This skill has two programs that are already written, scripts/plan.js and scripts/next.js. exec takes a program as code or as a file; here it is always a file. So a call of exec has the fields file, args and yield_s, and no code field: you write no program. The root of the file is this skill's root, the root you read this file from.
 
-1. **Plan.** Split the question into 2 to 5 sub-questions that do not overlap; a simple question gets 2. Give each a title of two or three words. Then call exec with these arguments, and change only what is in angle brackets:
+1. **Plan.** Split the question into 2 to 5 sub-questions that do not overlap; a simple question gets 2. Give each a title of two or three words. Then call exec with these fields, and change only what is in angle brackets:
 
    ```json
    { "file": { "root": "<this skill's root>", "path": "scripts/plan.js" }, "args": { "topic": "<the topic in two or three words>", "request": "<the person's request, copied word for word>", "language": "<the language the request is written in>", "sources": ["<each web address or site the person named>"], "questions": [{ "title": "<two or three words>", "question": "<sub-question 1>" }, { "title": "<two or three words>", "question": "<sub-question 2>" }] }, "yield_s": 30 }
