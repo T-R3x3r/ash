@@ -57,16 +57,15 @@ let dir = `research/${slug}-${day}`;
 for (let i = 2; await exists(dir); i += 1) dir = `research/${slug}-${day}-${i}`;
 
 const saved = { topic: said(topic), language: said(language), sources: sites, questions: plan };
-await tools.write({ root: 'workspace', path: `${dir}/plan.json`, content: `${JSON.stringify(saved, null, 2)}\n` });
-await store(`research:${dir}`, { ...saved, helpers: [] });
+await store(`research:${dir}`, { ...saved, helpers: [], findings: {}, passages: {} });
 
 const card = { question: [saved.topic, ...plan.map((q, i) => `${i + 1}. ${q.question}`)].join('\n'), choices: ['Start', 'Change'] };
-const next = { file: { root: "<this skill's root>", path: 'scripts/next.js' }, args: { dir }, yield_s: 30 };
+const next = { file: { root: "<this skill's root>", path: 'scripts/next.js' }, args: { dir, step: 1 }, yield_s: 30 };
 text(
   [
     `Saved the plan in ${dir}: ${plan.length} sub-questions, read ${sites.length ? `on ${sites.join(', ')} only` : 'on the web'}.`,
     `Next: call ask with these arguments, so that the person sees the plan:\n\n${JSON.stringify(card)}`,
-    `On "Start", call exec with these arguments:\n\n${JSON.stringify(next)}`,
+    `On "Start", call exec with these arguments, and again with each call that program prints, until it prints the report:\n\n${JSON.stringify(next)}`,
     'On "Change" or any other answer, ask what to change when the answer does not say it, then call plan.js again with the changed sub-questions.',
   ].join('\n\n'),
 );

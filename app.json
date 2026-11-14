@@ -62,7 +62,7 @@
   "agents": {
     "researcher": {
       "name": "Researcher",
-      "description": "Answers one sub-question of a deep research from web pages, saves each page it reads and writes its findings with quotes.",
+      "description": "Chooses the findings of one sub-question of a deep research from passages of saved web pages, each with a quote.",
       "model": {
         "kind": "chat",
         "tools": true
@@ -70,23 +70,9 @@
       "prompt": [
         "prompt/researcher.md"
       ],
-      "tools": [
-        "read",
-        "write",
-        "find",
-        "grep",
-        "exec",
-        "exec_wait"
-      ],
-      "roots": [
-        "workspace"
-      ],
-      "skills": [
-        "skills"
-      ],
       "budget": {
-        "tokens": 300000,
-        "rounds": 16
+        "tokens": 60000,
+        "rounds": 4
       }
     }
   },

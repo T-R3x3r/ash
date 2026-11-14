@@ -63,17 +63,18 @@ another file of the package.
 - A skill's `scripts/*.js` file is an `exec` program: it reads its input
   as `args` and answers with `text()`. The agent runs it with `exec` by
   `file`, the skill's root and the script's path, so the model writes only
-  JSON. The scripts call tools only, and the `researcher` helpers and Ash
-  share the files they write through the workspace. A program cannot call
-  `ask`, so each research script prints the next call in full, and the
-  model copies it.
-- Each deep research gets a new folder: `write` refuses to replace a file
-  that the session has not read, and a helper's session never read the
-  files of an earlier research. `plan.js` keeps the plan in that folder for
-  the helpers and in the conversation's program store (`store`, `load`)
-  for `next.js`, which records there the helpers it started. `next.js`
-  starts two helpers at a time and closes each one that has ended, since a
-  conversation keeps four helpers open at most.
+  JSON. The scripts call tools only. A program cannot call `ask`, so each
+  research script prints the next call in full, and the model copies it.
+- Deep research keeps its plan, the helpers it started and their findings
+  in the conversation's program store (`store`, `load`), and the pages it
+  read in a new folder of the workspace for each research, since `write`
+  refuses to replace a file that the session has not read. Each call of
+  `next.js` works for about 25 seconds, under the 30 seconds `exec` waits,
+  and prints the next call with a new `step`, since the same call three
+  times in a row is refused. `next.js` reads the pages itself, so a
+  `researcher` helper has no tools and answers its findings as JSON. It
+  starts two helpers at a time and closes each one that has ended, since
+  a conversation keeps four helpers open at most.
 - A project's Open folder shows its folder in the system's file manager
   (`openai/files/open`, `uses: files.open`); a view may open only a folder
   of its own app.
