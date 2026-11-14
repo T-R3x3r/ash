@@ -69,9 +69,10 @@ another file of the package.
   in the conversation's program store (`store`, `load`), and the pages it
   read in a new folder of the workspace for each research, since `write`
   refuses to replace a file that the session has not read. Each call of
-  `next.js` works for about 25 seconds, under the 30 seconds `exec` waits,
-  and prints the next call with a new `step`, since the same call three
-  times in a row is refused. `next.js` reads the pages itself, so a
+  `next.js` works for about 8 seconds, under the 10 seconds `exec` waits
+  when a model leaves out `yield_s`, and prints the next call with a new
+  `step`, since the same call three times in a row is refused. `next.js`
+  reads the pages itself, so a
   `researcher` helper has no tools and answers its findings as JSON. It
   starts two helpers at a time and closes each one that has ended, since
   a conversation keeps four helpers open at most.
