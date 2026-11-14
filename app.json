@@ -52,7 +52,38 @@
     "skills": [
       "skills"
     ],
+    "budget": {
+      "tokens": 2000000,
+      "rounds": 80
+    },
     "projects": true
+  },
+  "agents": {
+    "researcher": {
+      "name": "Researcher",
+      "description": "Answers one sub-question of a deep research from web pages, saves each page it reads and writes its findings with quotes.",
+      "model": {
+        "kind": "chat",
+        "tools": true
+      },
+      "prompt": [
+        "prompt/researcher.md"
+      ],
+      "tools": [
+        "read",
+        "write",
+        "find",
+        "grep",
+        "exec",
+        "exec_wait"
+      ],
+      "roots": [
+        "workspace"
+      ],
+      "skills": [
+        "skills"
+      ]
+    }
   },
   "recommends": [
     "browser"

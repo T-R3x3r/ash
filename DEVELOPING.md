@@ -13,8 +13,9 @@ an example of what an app with an agent looks like.
 | `app.json` | The manifest: id, name, the agent, its tools and roots, and the page it places in the rail. |
 | `views/ash.js` | Ash's page in its tab: the conversations and projects in a sidebar, and the chat the shell draws in the page's `chat` slot. |
 | `views/sheet.js` | Ash's sheets, in a modal the shell draws over the page: a delete to confirm and a project's instructions. |
-| `prompt/system.md` | The agent's system prompt. |
-| `skills/` | The skills the agent carries, one folder with a `SKILL.md` each. |
+| `prompt/system.md` | Ash's system prompt. |
+| `prompt/researcher.md` | The prompt of `researcher`, the helper that answers one sub-question of a deep research. |
+| `skills/` | The skills the agents carry, one folder with a `SKILL.md` each. |
 | `icon.svg` | The mark the client draws wherever Ash appears. |
 | `screenshots/` | The pictures of the Marketplace listing, in the order of their names. |
 
@@ -59,6 +60,12 @@ another file of the package.
 - Deleting a conversation or a project only goes through on a click inside
   the sheet, so the call starts in the handler of the press that confirms it.
   The page hears the deletion and moves its chat when it showed it.
+- A skill's `scripts/*.js` file is one JavaScript expression, an async
+  function. The agent reads it with `read` and runs it with `exec` through
+  `eval`, after it strips the line numbers `read` adds, so a line of a
+  script stays under the 2,000 characters a line of `read` keeps. The
+  scripts call tools only, and the `researcher` helpers and Ash share the
+  files they write through the workspace.
 - A project's Open folder shows its folder in the system's file manager
   (`openai/files/open`, `uses: files.open`); a view may open only a folder
   of its own app.

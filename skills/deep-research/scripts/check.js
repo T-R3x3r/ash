@@ -1,0 +1,92 @@
+(async (dir) => {
+  const MOST_HELPERS = 8;
+  const bare = (url) => String(url ?? '').trim().replace(/#.*$/, '').replace(/\/$/, '');
+  const flat = (s) =>
+    String(s ?? '')
+      .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+      .toLowerCase()
+      .replace(/[‘’‚`´]/g, "'")
+      .replace(/[“”„«»]/g, '"')
+      .replace(/[–—]/g, '-')
+      .replace(/[*_]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const readAll = async (path) => {
+    const lines = [];
+    let offset = 1;
+    for (;;) {
+      const r = await tools.read({ root: 'workspace', path, offset });
+      const more = /\n\n\[Showing lines \d+-(\d+) of \d+\. Use offset=(\d+) to continue\.\]$/.exec(r.text);
+      const body = more ? r.text.slice(0, more.index) : r.text;
+      lines.push(...body.split('\n').map((l) => l.replace(/^\d+\|/, '')));
+      if (!more) return lines.join('\n');
+      offset = Number(more[2]);
+    }
+  };
+  const maybe = async (path) => {
+    try {
+      return await readAll(path);
+    } catch {
+      return null;
+    }
+  };
+
+  const ledger = new Map();
+  const found = [];
+  const problems = [];
+  for (let n = 1; n <= MOST_HELPERS; n += 1) {
+    const listed = await maybe(`${dir}/ledger-${n}.jsonl`);
+    for (const line of (listed ?? '').split('\n')) {
+      if (!line.trim()) continue;
+      const entry = JSON.parse(line);
+      if (!ledger.has(bare(entry.url))) ledger.set(bare(entry.url), entry);
+    }
+    const raw = await maybe(`${dir}/findings-${n}.json`);
+    if (raw === null) continue;
+    let list;
+    try {
+      const parsed = JSON.parse(raw.replace(/^\s*```\w*\s*|\s*```\s*$/g, ''));
+      list = Array.isArray(parsed) ? parsed : parsed.findings;
+    } catch {
+      problems.push(`findings-${n}.json is not a JSON list`);
+      continue;
+    }
+    for (const f of list ?? []) found.push({ n, ...f });
+  }
+
+  const pages = new Map();
+  const kept = [];
+  const dropped = [];
+  for (const f of found) {
+    const entry = ledger.get(bare(f.url));
+    if (!entry) {
+      dropped.push(`${f.claim} (its address ${f.url} is not in the ledger)`);
+      continue;
+    }
+    if (!pages.has(entry.file)) pages.set(entry.file, flat(await readAll(entry.file)));
+    const quote = flat(f.quote).replace(/^["']|["']$/g, '').replace(/\.{3}|…/g, '').trim();
+    if (quote.length < 12 || !pages.get(entry.file).includes(quote)) {
+      dropped.push(`${f.claim} (its quote is not on the saved page ${entry.id})`);
+      continue;
+    }
+    kept.push({ n: f.n, source: entry.id, url: entry.url, claim: f.claim, quote: f.quote });
+  }
+  await tools.write({ root: 'workspace', path: `${dir}/checked.json`, content: JSON.stringify(kept, null, 2) });
+
+  const numbers = [...new Set(found.map((f) => f.n))].sort((a, b) => a - b);
+  return [
+    `Checked ${found.length} findings: kept ${kept.length}, dropped ${dropped.length}. The kept findings are in ${dir}/checked.json.`,
+    ...problems,
+    ...numbers.map((n) => {
+      const mine = kept.filter((f) => f.n === n);
+      return [
+        `Sub-question ${n}, findings kept: ${mine.length}.`,
+        ...mine.map((f) => `- [${f.source}] ${f.claim} Quote: "${f.quote}"`),
+      ].join('\n');
+    }),
+    dropped.length ? `Dropped:\n${dropped.map((d) => `- ${d}`).join('\n')}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n\n');
+})
