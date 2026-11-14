@@ -1,6 +1,6 @@
 ---
 name: data
-description: Answers questions about tables and numbers with Python, and draws charts. Use it when the person asks for a total, an average, a count, a filter or duplicates in a CSV, a spreadsheet or other data, or wants a chart.
+description: Use it for totals, averages, counts, filters, duplicates or charts over a CSV, a spreadsheet or other data.
 ---
 
 # Work with data

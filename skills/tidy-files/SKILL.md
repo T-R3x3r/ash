@@ -1,6 +1,6 @@
 ---
 name: tidy-files
-description: Sorts, moves, renames and removes duplicate files in a folder. Use it when the person asks to tidy, sort or clean up a folder, to put files of one kind together, or to remove duplicates.
+description: Use it to tidy, sort or move the files of a folder, or to remove duplicate files.
 ---
 
 # Tidy files

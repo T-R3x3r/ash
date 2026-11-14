@@ -1,6 +1,6 @@
 ---
 name: documents
-description: Makes and changes Word, Excel and PowerPoint files with Python. Use it when the person wants a .docx, .xlsx or .pptx file written, filled in or changed.
+description: Use it to write, fill in or change a Word, Excel or PowerPoint file.
 ---
 
 # Word, Excel and PowerPoint

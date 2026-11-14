@@ -1,6 +1,6 @@
 ---
 name: deep-research
-description: Researches a question in depth on the web, or on the sites the person names, with helpers, and writes a report whose sources are checked. Use it when the person asks to research, look into or compare something in depth.
+description: Use it when the person asks to research or compare something in depth, on the web or on sites they name.
 ---
 
 # Deep research
