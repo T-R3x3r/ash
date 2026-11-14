@@ -14,10 +14,7 @@ Do these steps in order. The programs below need this skill's root: the root you
 3. **Helpers.** For each sub-question, call spawn_agent with these arguments:
 
    ```json
-   { "agent": "researcher", "title": "<two or three words>", "task": "Sub-question <number>: <the sub-question>
-Folder: <the folder>
-Sources: <the addresses the person named, or the web>
-Language: <the language the person wrote in>" }
+   { "agent": "researcher", "title": "<two or three words>", "task": "Sub-question <number>: <the sub-question>\nFolder: <the folder>\nSources: <the addresses the person named, or the web>\nLanguage: <the language the person wrote in>" }
    ```
 
    Start two helpers, wait for them with wait_agents and timeout_s 1800, then start the next two.
