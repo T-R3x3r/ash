@@ -86,7 +86,7 @@
       ],
       "budget": {
         "tokens": 300000,
-        "rounds": 12
+        "rounds": 16
       }
     }
   },

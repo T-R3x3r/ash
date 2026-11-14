@@ -1,6 +1,6 @@
 ---
 name: summarise
-description: Use it when the person asks for the gist, a summary or a short version of a text.
+description: Get the gist of a text: a short summary in three points.
 ---
 
 # Summarise

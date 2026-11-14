@@ -1,6 +1,6 @@
 ---
 name: documents
-description: Use it to write, fill in or change a Word, Excel or PowerPoint file.
+description: Write, fill in or change a Word, Excel or PowerPoint file.
 ---
 
 # Word, Excel and PowerPoint
