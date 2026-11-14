@@ -1,6 +1,6 @@
 ---
 name: summarise
-description: Summarises a text in three bullet points, each under twelve words. Use it when the person asks for the gist of something.
+description: Summarises a text in three bullet points, each under twelve words. Use it when the person asks for the gist, a summary or a short version of a text.
 ---
 
 # Summarise
